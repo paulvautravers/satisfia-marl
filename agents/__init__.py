@@ -1,20 +1,17 @@
 import numpy as np
-import copy
-from game import Game, JobstGame
+
 
 class Agent:
 
     agent_dict = {}  # initialise to zero
 
-    def __init__(self, label: str, game: Game, strategy_set: dict = None,
-                 opponent=None, strategy=None):
+    def __init__(self, label: str, strategy_set: dict = None, opponent=None, strategy=None):
 
         self.label = label
-        self.game = game
         self.strategy_set = strategy_set
         self.strategy = strategy
         self.opponent = opponent
-        self.id = Agent.agent_dict[label] + 1 if label in Agent.agent_dict else 0
+        self.id = Agent.agent_dict[label] + 1 if label in Agent.agent_dict else 0   ## I don't understand this
         Agent.agent_dict[label] = self.id
 
         print(Agent.agent_dict)
@@ -25,7 +22,7 @@ class Agent:
                 f"Strategy Set: {self.strategy_set} \n")
 
     def __copy__(self):
-        new_agent = Agent(self.label, self.game, self.strategy_set)
+        new_agent = Agent(self.label, self.strategy_set)
         return new_agent
 
     def set_opponent(self, agent):
@@ -44,20 +41,20 @@ class Agent:
 
 class SatisfiaAgent(Agent):
 
-    def __init__(self, game: Game, strategy_set):
-        super().__init__('satisfia', game, strategy_set)
+    def __init__(self, strategy_set):
+        super().__init__('satisfia', strategy_set)
 
 class MaximiserAgent(Agent):
 
-    def __init__(self, game: Game, strategy_set):
-        super().__init__('maximiser', game, strategy_set)
+    def __init__(self, strategy_set):
+        super().__init__('maximiser', strategy_set)
 
 
 if __name__ == '__main__':
 
     # 'probabilities': (1/len(options)*np.ones_like(options))}
 
-    options = JobstGame.row_options
+    options = [0, 1, 2, 3, 4, 5]
     satisfia_set = {'satisfia': {'actions': options,
                                  'probabilities': [0, 0, 0, 1, 0, 0]},
                     'maximiser': {'actions': options,
@@ -69,18 +66,18 @@ if __name__ == '__main__':
                      'maximiser': {'actions': options,
                                    'probabilities': [0, 0, 0, 0, 0, 1]}
                      }
-    #
-    # satisfier = SatisfiaAgent(JobstGame, strategy_set=satisfia_set)
-    # maximiser = MaximiserAgent(JobstGame, strategy_set=maximiser_set)
-    #
-    # satisfier2 = SatisfiaAgent(JobstGame, strategy_set=satisfia_set)
 
-    satisfier = Agent('satisfia', JobstGame)
-    satisfier2 = Agent('satisfia', JobstGame)
-    satisfier3 = Agent('satisfia', JobstGame)
+    satisfier = SatisfiaAgent(strategy_set=satisfia_set)
+    maximiser = MaximiserAgent(strategy_set=maximiser_set)
 
-    maximiser = Agent('maximiser', JobstGame)
-    maximiser2 = Agent('maximiser', JobstGame)
+    satisfier2 = SatisfiaAgent(strategy_set=satisfia_set)
+
+    satisfier = Agent('satisfia')
+    satisfier2 = Agent('satisfia')
+    satisfier3 = Agent('satisfia')
+
+    maximiser = Agent('maximiser')
+    maximiser2 = Agent('maximiser')
     maximiser3 = maximiser.__copy__()
 
 

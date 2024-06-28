@@ -1,9 +1,11 @@
+import random
+
 import numpy as np
 import numpy.typing as npt
-import random
+
 import agents
-import pandas as pd
 from game import Game
+
 
 class MonteCarlo:
 
@@ -55,16 +57,4 @@ class MonteCarlo:
         for agent_type, r in self.reward_dict:
             n_agents = int((r/total_reward)*n_agents_total)
             if n_agents > 0:
-                agent_pop_dict[agent_type] = [agents.Agent(agent_type, self.game) for _ in range(n_agents)]
-
-
-
-
-
-
-
-
-
-
-
-
+                agent_pop_dict[agent_type] = [agents.Agent(agent_type) for _ in range(n_agents)]
