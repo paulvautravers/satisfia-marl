@@ -14,8 +14,6 @@ class Agent:
         self.id = Agent.agent_dict[label] + 1 if label in Agent.agent_dict else 0   ## I don't understand this
         Agent.agent_dict[label] = self.id
 
-        print(Agent.agent_dict)
-
     def __repr__(self):
         return (f"Label: {self.label} \n"
                 f"ID: {self.id} \n"
