@@ -1,5 +1,9 @@
 import numpy as np
 import numpy.typing as npt
+from matplotlib import pyplot as plt
+
+from agents import Agent, MaximiserAgent, SatisfiaAgent
+
 
 class Game:
 
@@ -14,6 +18,36 @@ class Game:
     def get_reward(self, row_option: int, column_option: int) -> tuple[int, int]:
         reward = self.normal_form[row_option, column_option]
         return reward
+
+    def play_n_rounds(self, n: int, row_agent: Agent, column_agent: Agent, plot=False) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
+        row_agent.set_opponent(column_agent)
+        column_agent.set_opponent(row_agent)
+
+        actions = np.zeros((2, n), dtype=int)
+        rewards = np.zeros((2, n), dtype=int)
+
+        for round in range(n):
+            row_agent.choose_strategy()   ## Should this be done at every round?
+            column_agent.choose_strategy()
+
+            row_action = row_agent.get_action()
+            column_action = column_agent.get_action()
+            row_reward, column_reward = self.get_reward(row_action, column_action)
+
+            actions[0, round] = row_action
+            actions[1, round] = column_action
+            rewards[0, round] = row_reward
+            rewards[1, round] = column_reward
+
+        if plot:
+            plt.plot(rewards[0, :], label=f'{row_agent.label} (row agent)')
+            plt.plot(rewards[1, :], label=f'{column_agent.label} (column agent)')
+            plt.title("Rewards at every round")
+            plt.xlabel('Round')
+            plt.ylabel('Reward')
+            plt.legend()
+            plt.show()
+        return actions, rewards
 
 
 jobst_game = np.array([-2, -2, -1, -3, 0, -4, 1, -4, 3, -4, 7, -1,
@@ -32,9 +66,24 @@ if __name__ == '__main__':
     # prisoners_dilemma = prisoners_dilemma.reshape((2, 2))
     defaultGame = Game(prisoners_dilemma)
 
-    JobstGame = Game(jobst_game)
-    payoff = JobstGame.get_reward(3, 1)
-    print(payoff)
 
-    print(JobstGame.row_options)
+    # Iterated JobstGame example
+    options = JobstGame.row_options
+    maximiser = MaximiserAgent({
+        'satisfia': {'actions': options,
+                    'probabilities': [0, 0, 0, 0, 0, 1]}, # I changed this one
+        'maximiser': {'actions': options,
+                    'probabilities': [0, 0, 0, 0, 0, 1]}
+    })
+    satisfia = SatisfiaAgent({
+        'satisfia': {'actions': options,
+                    'probabilities': [0, 0, 0, 1, 0, 0]},
+        'maximiser': {'actions': options,
+                    'probabilities': [0, 1, 0, 0, 0, 0]}
+    })
+
+    actions, rewards = JobstGame.play_n_rounds(10, satisfia, maximiser, plot=True)
+
+    print(actions)
+    print(rewards)
 
