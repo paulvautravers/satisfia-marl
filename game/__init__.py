@@ -34,10 +34,8 @@ class Game:
             column_action = column_agent.get_action()
             row_reward, column_reward = self.get_reward(row_action, column_action)
 
-            actions[0, round] = row_action
-            actions[1, round] = column_action
-            rewards[0, round] = row_reward
-            rewards[1, round] = column_reward
+            actions[:, round] = [row_action, column_action]
+            rewards[:, round] = [row_reward, column_reward]
 
         if plot:
             plt.plot(rewards[0, :], label=f'{row_agent.label} (row agent)')
