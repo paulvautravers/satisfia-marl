@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 
 
@@ -5,12 +6,10 @@ class Agent:
 
     agent_dict = {}  # initialise to zero
 
-    def __init__(self, label: str, strategy_set: dict = None, opponent=None, strategy=None):
+    def __init__(self, label: str, strategy_set: dict = None):
 
         self.label = label
         self.strategy_set = strategy_set
-        self.strategy = strategy
-        self.opponent = opponent
         self.id = Agent.agent_dict[label] + 1 if label in Agent.agent_dict else 0   ## I don't understand this
         Agent.agent_dict[label] = self.id
 
@@ -23,24 +22,18 @@ class Agent:
         new_agent = Agent(self.label, self.strategy_set)
         return new_agent
 
-    def set_opponent(self, agent):
-        self.opponent = agent
-
-    def set_strategy_set(self, strategy_set):
-        self.strategy_set = strategy_set
-
-    def choose_strategy(self):
-        self.strategy = self.strategy_set[self.opponent.label]
-
-    def get_action(self):
-        action = np.random.choice(self.strategy['actions'],
-                                  p=self.strategy['probabilities'])
+    def get_action(self, opponent: Agent):
+        strategy = self.strategy_set[opponent.label]
+        action = np.random.choice(strategy['actions'],
+                                  p=strategy['probabilities'])
         return action
+
 
 class SatisfiaAgent(Agent):
 
     def __init__(self, strategy_set):
         super().__init__('satisfia', strategy_set)
+
 
 class MaximiserAgent(Agent):
 

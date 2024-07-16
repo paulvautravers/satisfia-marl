@@ -32,14 +32,8 @@ class MonteCarlo:
 
     def play_game(self, agent1: agents.Agent, agent2: agents.Agent):
 
-        agent1.set_opponent(agent2)
-        agent2.set_opponent(agent1)
-
-        agent1.choose_strategy()
-        agent2.choose_strategy()
-
-        action1 = agent1.get_action()
-        action2 = agent2.get_action()
+        action1 = agent1.get_action(agent2)
+        action2 = agent2.get_action(agent1)
 
         r1, r2 = self.game.get_reward(action1, action2)   # maybe want to have reward as an attribute for agent?
         self.reward_dict[agent1.label] += max(0, r1)
