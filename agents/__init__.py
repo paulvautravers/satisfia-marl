@@ -1,44 +1,66 @@
 from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from typing import Type
+
 import numpy as np
 
 
-class Agent:
+class Agent(ABC):
 
-    agent_dict = {}  # initialise to zero
+    agent_dict = defaultdict(int)  # initialised to zero
+    agent_count = 0
 
-    def __init__(self, label: str, strategy_set: dict = None):
-
-        self.label = label
-        self.strategy_set = strategy_set
-        self.id = Agent.agent_dict[label] + 1 if label in Agent.agent_dict else 0   ## I don't understand this
-        Agent.agent_dict[label] = self.id
+    def __init__(self):
+        self.id = Agent.agent_count  ##  The id should be unique irrespective of the type
+        Agent.agent_count += 1
+        Agent.agent_dict[self.type] += 1
 
     def __repr__(self):
-        return (f"Label: {self.label} \n"
-                f"ID: {self.id} \n"
-                f"Strategy Set: {self.strategy_set} \n")
+        return (f"Type: {self.type.__name__} \n"
+                f"ID: {self.id} \n")
 
-    def __copy__(self):
-        new_agent = Agent(self.label, self.strategy_set)
-        return new_agent
+    def __str__(self):
+        return f"{self.type.__name__}(ID={self.id})"
 
-    def get_action(self, opponent: Agent):
-        strategy = self.strategy_set[opponent.label]
+    @property
+    def type(self) -> Type[Agent]:
+        return self.__class__
+
+    @property
+    def label(self) -> str:
+        return self.type.__name__
+
+    @abstractmethod
+    def get_action(self, opponent: Agent) -> int:
+        raise NotImplementedError
+
+
+class SatisfiaAgent(Agent):
+
+    def __init__(self, strategy_set: dict):
+        super().__init__()
+        self.strategy_set = strategy_set
+
+    def get_action(self, opponent: Agent) -> int:
+        strategy = self.strategy_set[opponent.type]
         action = np.random.choice(strategy['actions'],
                                   p=strategy['probabilities'])
         return action
 
 
-class SatisfiaAgent(Agent):
-
-    def __init__(self, strategy_set):
-        super().__init__('satisfia', strategy_set)
-
-
 class MaximiserAgent(Agent):
 
-    def __init__(self, strategy_set):
-        super().__init__('maximiser', strategy_set)
+    def __init__(self, strategy_set: dict):
+        super().__init__()
+        self.strategy_set = strategy_set
+
+    def get_action(self, opponent: Agent) -> int:
+        strategy = self.strategy_set[opponent.type]
+        action = np.random.choice(strategy['actions'],
+                                  p=strategy['probabilities'])
+        return action
 
 
 if __name__ == '__main__':
@@ -62,14 +84,10 @@ if __name__ == '__main__':
     maximiser = MaximiserAgent(strategy_set=maximiser_set)
 
     satisfier2 = SatisfiaAgent(strategy_set=satisfia_set)
-
-    satisfier = Agent('satisfia')
-    satisfier2 = Agent('satisfia')
-    satisfier3 = Agent('satisfia')
-
-    maximiser = Agent('maximiser')
-    maximiser2 = Agent('maximiser')
-    maximiser3 = maximiser.__copy__()
+    print(satisfier2.type)
+    print(maximiser.type)
+    print(repr(satisfier))
+    print(maximiser)
 
 
 

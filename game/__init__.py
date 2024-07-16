@@ -61,15 +61,15 @@ if __name__ == '__main__':
     # Iterated JobstGame example
     options = JobstGame.row_options
     maximiser = MaximiserAgent({
-        'satisfia': {'actions': options,
+        SatisfiaAgent: {'actions': options,
                     'probabilities': [0, 0, 0, 0, 0, 1]},  # I changed this one
-        'maximiser': {'actions': options,
+        MaximiserAgent: {'actions': options,
                     'probabilities': [0, 0, 0, 0, 0, 1]}
     })
     satisfia = SatisfiaAgent({
-        'satisfia': {'actions': options,
+        SatisfiaAgent: {'actions': options,
                     'probabilities': [0, 0, 0, 1, 0, 0]},
-        'maximiser': {'actions': options,
+        MaximiserAgent: {'actions': options,
                     'probabilities': [0, 1, 0, 0, 0, 0]}
     })
 
