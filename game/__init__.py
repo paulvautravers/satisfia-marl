@@ -20,18 +20,12 @@ class Game:
         return reward
 
     def play_n_rounds(self, n: int, row_agent: Agent, column_agent: Agent, plot=False) -> tuple[npt.NDArray[int], npt.NDArray[int]]:
-        row_agent.set_opponent(column_agent)
-        column_agent.set_opponent(row_agent)
-
         actions = np.zeros((2, n), dtype=int)
         rewards = np.zeros((2, n), dtype=int)
 
         for round in range(n):
-            row_agent.choose_strategy()   ## Should this be done at every round?
-            column_agent.choose_strategy()
-
-            row_action = row_agent.get_action()
-            column_action = column_agent.get_action()
+            row_action = row_agent.get_action(column_agent)
+            column_action = column_agent.get_action(row_agent)
             row_reward, column_reward = self.get_reward(row_action, column_action)
 
             actions[:, round] = [row_action, column_action]
@@ -64,19 +58,18 @@ if __name__ == '__main__':
     # prisoners_dilemma = prisoners_dilemma.reshape((2, 2))
     defaultGame = Game(prisoners_dilemma)
 
-
     # Iterated JobstGame example
     options = JobstGame.row_options
     maximiser = MaximiserAgent({
-        'satisfia': {'actions': options,
-                    'probabilities': [0, 0, 0, 0, 0, 1]}, # I changed this one
-        'maximiser': {'actions': options,
+        SatisfiaAgent: {'actions': options,
+                    'probabilities': [0, 0, 0, 0, 0, 1]},  # I changed this one
+        MaximiserAgent: {'actions': options,
                     'probabilities': [0, 0, 0, 0, 0, 1]}
     })
     satisfia = SatisfiaAgent({
-        'satisfia': {'actions': options,
+        SatisfiaAgent: {'actions': options,
                     'probabilities': [0, 0, 0, 1, 0, 0]},
-        'maximiser': {'actions': options,
+        MaximiserAgent: {'actions': options,
                     'probabilities': [0, 1, 0, 0, 0, 0]}
     })
 
