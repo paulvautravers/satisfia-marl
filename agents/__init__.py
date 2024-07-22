@@ -3,8 +3,9 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Type
-
 import numpy as np
+
+from globals import *
 
 
 class Agent(ABC):
@@ -23,6 +24,11 @@ class Agent(ABC):
 
     def __str__(self):
         return f"{self.type.__name__}(ID={self.id})"
+
+    @classmethod
+    def reset(cls):
+        Agent.agent_dict = defaultdict(int)
+        Agent.agent_count = 0
 
     @property
     def type(self) -> Type[Agent]:
@@ -45,8 +51,8 @@ class SatisfiaAgent(Agent):
 
     def get_action(self, opponent: Agent) -> int:
         strategy = self.strategy_set[opponent.type]
-        action = np.random.choice(strategy['actions'],
-                                  p=strategy['probabilities'])
+        action = np.random.choice(range(len(strategy)), p=strategy)
+
         return action
 
 
@@ -58,36 +64,20 @@ class MaximiserAgent(Agent):
 
     def get_action(self, opponent: Agent) -> int:
         strategy = self.strategy_set[opponent.type]
-        action = np.random.choice(strategy['actions'],
-                                  p=strategy['probabilities'])
+        action = np.random.choice(range(len(strategy)), p=strategy)
         return action
 
 
+# Agent related globals
+MAXIMISER_SET = {SatisfiaAgent: [0, 1, 0, 0, 0, 0], MaximiserAgent: [0, 0, 0, 0, 0, 1]}
+SATISFIA_SET = {SatisfiaAgent: [0, 0, 0, 1, 0, 0], MaximiserAgent: [0, 1, 0, 0, 0, 0]}
+
 if __name__ == '__main__':
 
-    # 'probabilities': (1/len(options)*np.ones_like(options))}
+    satisfia = SatisfiaAgent(strategy_set=SATISFIA_SET)
+    maximiser = MaximiserAgent(strategy_set=MAXIMISER_SET)
 
-    options = [0, 1, 2, 3, 4, 5]
-    satisfia_set = {'satisfia': {'actions': options,
-                                 'probabilities': [0, 0, 0, 1, 0, 0]},
-                    'maximiser': {'actions': options,
-                                  'probabilities': [0, 1, 0, 0, 0, 0]}
-                    }
-
-    maximiser_set = {'satisfia': {'actions': options,
-                                  'probabilities': [0, 1, 0, 0, 0, 0]},
-                     'maximiser': {'actions': options,
-                                   'probabilities': [0, 0, 0, 0, 0, 1]}
-                     }
-
-    satisfier = SatisfiaAgent(strategy_set=satisfia_set)
-    maximiser = MaximiserAgent(strategy_set=maximiser_set)
-
-    satisfier2 = SatisfiaAgent(strategy_set=satisfia_set)
-    print(satisfier2.type)
-    print(maximiser.type)
-    print(repr(satisfier))
-    print(maximiser)
+    print(SATISFIA_SET)
 
 
 
