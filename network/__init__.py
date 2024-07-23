@@ -16,7 +16,8 @@ def gen_agent_population(n_agents: int, satisfia_share: float) -> npt.NDArray[ag
 
     satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(satisfia_count)])
     maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(maximiser_count)])
-    agent_population = np.random.shuffle(np.append(satisfias, maximisers))
+    agent_population = np.append(satisfias, maximisers)
+    np.random.shuffle(agent_population)
     return agent_population
 
 
@@ -51,7 +52,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             #     self.color_map.append('red')
             agent = self.agent_list[i]
             graph.nodes[node]['data'] = agent
-            self.color_map.append(self.color_agent_mapping[agent])
+            self.color_map.append(self.color_agent_mapping[agent.type])
 
         return graph
 
@@ -69,18 +70,24 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         plt.title("Barabási–Albert Network")
         plt.show()
 
-satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(8)])
-maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(2)])
-agent_population = np.append(satisfias, maximisers)
 
-my_graph = SatisfiaMaximiserNetwork(JOBST_GAME, combined_strategies, agent_population, 2, 0.5, nx.barabasi_albert_graph)
+if __name__ == '__main__':
+    my_graph = SatisfiaMaximiserNetwork(
+        JOBST_GAME,
+        combined_strategies,
+        10,
+        0.5,
+        100,
+        3,
+        nx.barabasi_albert_graph
+    )
 
-print(my_graph.graph.nodes[1])
+    print(my_graph.graph.nodes[1])
 
-for i in range(my_graph.n):
-    print(my_graph.graph.nodes[i])
+    for i in range(my_graph.n):
+        print(my_graph.graph.nodes[i])
 
-
+    my_graph.draw_network()
 
 
 

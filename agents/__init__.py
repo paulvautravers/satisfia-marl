@@ -19,8 +19,7 @@ class Agent(ABC):
         Agent.agent_dict[self.type] += 1
 
     def __repr__(self):
-        return (f"Type: {self.type.__name__} \n"
-                f"ID: {self.id} \n")
+        return f"{self.type.__name__}(ID={self.id})"
 
     def __str__(self):
         return f"{self.type.__name__}(ID={self.id})"
