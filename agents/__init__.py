@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Type
@@ -15,6 +16,8 @@ class Agent(ABC):
 
     def __init__(self):
         self.id = Agent.agent_count  ##  The id should be unique irrespective of the type
+        self.payoff = 0
+        self.gamma = 1
         Agent.agent_count += 1
         Agent.agent_dict[self.type] += 1
 
@@ -37,9 +40,19 @@ class Agent(ABC):
     def label(self) -> str:
         return self.type.__name__
 
-    @abstractmethod
+    # @abstractmethod
     def get_action(self, opponent: Agent) -> int:
-        raise NotImplementedError
+        # raise NotImplementedError
+        pass
+
+    def get_new_avg_payoff(self, new_payoff: float):
+        return self.gamma*self.payoff + new_payoff
+
+    # def __deepcopy__(self, memodict={}):
+    #     copy_obj = copy.deepcopy(self)
+    #     # copy_obj.payoff = 0
+    #
+    #     return copy_obj
 
 
 class SatisfiaAgent(Agent):
@@ -76,7 +89,16 @@ if __name__ == '__main__':
     satisfia = SatisfiaAgent(strategy_set=SATISFIA_SET)
     maximiser = MaximiserAgent(strategy_set=MAXIMISER_SET)
 
-    print(SATISFIA_SET)
+    print(satisfia)
+    print(maximiser)
+
+    class_type = type(maximiser)
+    new_agent = Agent() #class_type.__new__(class_type)
+    new_agent.__class__ = class_type
+
+    print(new_agent)
+
+    # print(SATISFIA_SET)
 
 
 

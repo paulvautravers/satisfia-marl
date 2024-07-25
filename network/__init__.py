@@ -1,12 +1,16 @@
+import copy
+import random
+
 import networkx as netx
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
+from copy import deepcopy
 
 
 import agents
-from agents import SatisfiaAgent, MaximiserAgent, SATISFIA_SET, MAXIMISER_SET
+from agents import Agent, SatisfiaAgent, MaximiserAgent, SATISFIA_SET, MAXIMISER_SET
 from monte_carlo import MonteCarlo, combined_strategies
 from games import Game, JOBST_GAME
 
@@ -38,7 +42,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         self.graph_type = graph_type
         self.color_map = []
         self.graph = self.set_node_types()
-        self.edges = self.graph.edges
+        self.edges = np.array(self.graph.edges)
+        self.nodes = np.array(self.graph.nodes(data=True))
 
     def set_node_types(self):
         graph = self.graph_type(self.n, self.m)
@@ -56,17 +61,56 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
         return graph
 
-    def random_process_on_edge(self, edge_process_prob: float):
+    def get_random_edge(self, edge_process_prob: float):
         r = np.random.uniform()
         if r < edge_process_prob:
-            edge_idx = np.random.randint(self.edges)
-            chosen_edge = self.edges[edge_idx]
-
+            edge_idx = np.random.randint(len(self.edges))
+            chosen_edge = self.edges[edge_idx, :]
             return chosen_edge
+
+    def get_random_node(self, node_process_prob: float):
+        r = np.random.uniform()
+        if r < node_process_prob:
+            node_idx = np.random.randint(self.n)
+            return node_idx
+
+    def get_random_neighbour(self, node):
+        neighbours = self.graph.neighbors(node)
+        neighbor = random.choice([n for n in neighbours])
+        return neighbor
+
+    def node_social_learning(self, learner_node, a: float, b: float) -> None:
+
+        neighbour_node = self.get_random_neighbour(learner_node)
+
+        learner_agent = self.graph.nodes[learner_node]['data']
+
+        neighbor_agent = self.graph.nodes[neighbour_node]['data']
+
+        print("neighbor_payoff", neighbor_agent.payoff)
+        print("learner_payoff", learner_agent.payoff)
+
+        p_switch = 1/(1+np.exp(a+b*(neighbor_agent.payoff - learner_agent.payoff)))
+
+        print("p_switch", p_switch)
+
+        r = np.random.uniform()
+
+        if r < 0.5:
+
+            print(f"switched from {learner_agent} to {neighbor_agent}")
+            # learner_agent.count
+            new_learner_agent = copy.deepcopy(neighbor_agent)
+            new_learner_agent.payoff = 0
+
+            print(new_learner_agent)
+
+            self.graph.nodes[learner_node]['data'] = new_learner_agent
+            self.agent_counts = self.get_agent_counts()
 
     def draw_network(self):
         plt.figure(figsize=(7, 7))
-        nx.draw(self.graph, node_color=self.color_map, node_size=30, with_labels=False)
+        nx.draw(self.graph, node_color=self.color_map, node_size=30, with_labels=True)
         plt.title("Barabási–Albert Network")
         plt.show()
 
@@ -75,19 +119,29 @@ if __name__ == '__main__':
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        10,
-        0.5,
+        20,
+        0.9,
         100,
-        3,
+        2,
         nx.barabasi_albert_graph
     )
 
-    print(my_graph.graph.nodes[1])
+    EDGE_PROB = 1
+    NODE_PROB = 1
 
-    for i in range(my_graph.n):
-        print(my_graph.graph.nodes[i])
+    for i in range(my_graph.generations):
+        node1, node2 = my_graph.get_random_edge(EDGE_PROB)
+        agent1 = my_graph.graph.nodes[node1]['data']
+        agent2 = my_graph.graph.nodes[node2]['data']
+        my_graph.play_game(agent1, agent2)
 
-    my_graph.draw_network()
+        learner_node = my_graph.get_random_node(NODE_PROB)
+        my_graph.node_social_learning(learner_node, a=0.5, b=0.5)
+
+        print(my_graph.agent_counts)
+
+        if i % 5 == 0:
+            my_graph.draw_network()
 
 
 

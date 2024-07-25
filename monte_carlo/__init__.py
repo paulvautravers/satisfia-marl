@@ -24,7 +24,11 @@ class MonteCarlo:
         self.generations = generations
         self.agent_types = set([agent.type for agent in self.agent_list])
         self.reward_dict = defaultdict(int)
-        self.agent_counts = {agent_type: np.array([count]) for agent_type, count in agents.Agent.agent_dict.items()}
+        self.agent_counts = self.get_agent_counts()
+
+    @staticmethod
+    def get_agent_counts():
+        return {agent_type: np.array([count]) for agent_type, count in agents.Agent.agent_dict.items()}
 
     def __repr__(self):
         return(f"Number of agents: {len(self.agent_list)} \n"
@@ -35,12 +39,17 @@ class MonteCarlo:
 
     def play_game(self, agent1: agents.Agent, agent2: agents.Agent):
 
+        print(agent1)
+
         action1 = agent1.get_action(agent2)
         action2 = agent2.get_action(agent1)
 
         r1, r2 = self.game.get_reward(action1, action2)   # maybe want to have reward as an attribute for agent?
         self.reward_dict[type(agent1)] += max(0, r1)
         self.reward_dict[type(agent2)] += max(0, r2)
+
+        agent1.payoff = agent1.get_new_avg_payoff(max(0, r1))
+        agent2.payoff = agent2.get_new_avg_payoff(max(0, r2))
 
     def play_all_games(self):
 
