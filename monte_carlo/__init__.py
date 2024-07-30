@@ -37,8 +37,10 @@ class MonteCarlo:
         action2 = agent2.get_action(agent1)
 
         r1, r2 = self.game.get_reward(action1, action2)   # maybe want to have reward as an attribute for agent?
-        self.reward_dict[type(agent1)] += max(0, r1)
-        self.reward_dict[type(agent2)] += max(0, r2)
+
+        self.reward_dict[type(agent1)] = max(0, self.reward_dict[type(agent1)] + r1)
+        self.reward_dict[type(agent2)] = max(0, self.reward_dict[type(agent2)] + r2)
+
 
     def play_all_games(self):
 
@@ -98,14 +100,14 @@ if __name__ == '__main__':
                     }
 
     maximiser_set = {SatisfiaAgent: {'actions': options,
-                                  'probabilities': [0, 1, 0, 0, 0, 0]},
+                                  'probabilities': [1, 0, 0, 0, 0, 0]},
                      MaximiserAgent: {'actions': options,
                                    'probabilities': [0, 0, 0, 0, 0, 1]}
                      }
 
     BIG_STRATEGY_SET = {SatisfiaAgent: satisfia_set, MaximiserAgent: maximiser_set}  # we should make this into a table or smth
-    satisfias = np.array([agents.SatisfiaAgent(satisfia_set) for _ in range(720)])
-    maximisers = np.array([agents.MaximiserAgent(maximiser_set) for _ in range(280)])
+    satisfias = np.array([agents.SatisfiaAgent(satisfia_set) for _ in range(73)])
+    maximisers = np.array([agents.MaximiserAgent(maximiser_set) for _ in range(27)])
     AGENT_LIST = np.append(satisfias, maximisers)
     GAME = JobstGame
     GENERATIONS = 100

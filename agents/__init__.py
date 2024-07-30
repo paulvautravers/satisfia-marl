@@ -75,7 +75,7 @@ if __name__ == '__main__':
                     }
 
     maximiser_set = {'satisfia': {'actions': options,
-                                  'probabilities': [0, 1, 0, 0, 0, 0]},
+                                  'probabilities': [1, 0, 0, 0, 0, 0]},
                      'maximiser': {'actions': options,
                                    'probabilities': [0, 0, 0, 0, 0, 1]}
                      }
