@@ -47,66 +47,70 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
     def set_node_types(self):
         graph = self.graph_type(self.n, self.m)
-        r_vals = np.random.uniform(0, 1, size=self.n)
         for node, i in enumerate(graph.nodes()):
-            # if r_vals[i] < self.satisfia_share:
-            #     graph.nodes[node]['data'] = self.agent_list
-            #     self.color_map.append('blue')
-            # else:
-            #     graph.nodes[node]['data'] = MaximiserAgent(MAXIMISER_SET)
-            #     self.color_map.append('red')
             agent = self.agent_list[i]
             graph.nodes[node]['data'] = agent
             self.color_map.append(self.color_agent_mapping[agent.type])
 
         return graph
 
-    def get_random_edge(self, edge_process_prob: float):
-        r = np.random.uniform()
-        if r < edge_process_prob:
-            edge_idx = np.random.randint(len(self.edges))
-            chosen_edge = self.edges[edge_idx, :]
-            return chosen_edge
+    def get_random_edge(self):
+        edge_idx = np.random.randint(len(self.edges))
+        chosen_edge = self.edges[edge_idx, :]
+        return chosen_edge
 
-    def get_random_node(self, node_process_prob: float):
-        r = np.random.uniform()
-        if r < node_process_prob:
-            node_idx = np.random.randint(self.n)
-            return node_idx
+    def get_random_node(self):
+        node_idx = np.random.randint(self.n)
+        return node_idx
 
-    def get_random_neighbour(self, node):
-        neighbours = self.graph.neighbors(node)
-        neighbor = random.choice([n for n in neighbours])
+    def get_random_neighbor(self, node):
+        neighbors = self.graph.neighbors(node)
+        neighbor = random.choice([n for n in neighbors])
         return neighbor
 
-    def node_social_learning(self, learner_node, a: float, b: float) -> None:
-
-        neighbour_node = self.get_random_neighbour(learner_node)
-
-        learner_agent = self.graph.nodes[learner_node]['data']
-
-        neighbor_agent = self.graph.nodes[neighbour_node]['data']
-
-        print("neighbor_payoff", neighbor_agent.payoff)
-        print("learner_payoff", learner_agent.payoff)
+    def node_social_learning(self, learner_agent, neighbor_agent, a: float, b: float) -> None:
 
         p_switch = 1/(1+np.exp(a+b*(learner_agent.payoff - neighbor_agent.payoff)))
 
         print("p_switch", p_switch)
-
         r = np.random.uniform()
 
-        if r < 0.5:
+        if r < p_switch:
 
-            print(f"switched from {learner_agent} to {neighbor_agent}")
-            # learner_agent.count
-            new_learner_agent = copy.deepcopy(neighbor_agent)
-            new_learner_agent.payoff = 0
+            print(f"Switch between: Learner {learner_agent} with {learner_agent.payoff}"
+                  f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
+            print(f"old learner: {learner_agent}")
+            print(f"old neighbor: {neighbor_agent}")
+            previous_payoff = learner_agent.payoff
+            previous_id = learner_agent.id
+            learner_agent = deepcopy(neighbor_agent)
+            learner_agent.payoff = previous_payoff
+            learner_agent.id = previous_id
+            print(f"new learner: {learner_agent}")
+            print(f"new neighbor: {neighbor_agent}")
 
-            print(new_learner_agent)
 
-            self.graph.nodes[learner_node]['data'] = new_learner_agent
-            self.agent_counts = self.get_agent_counts()
+            self.agent_list[previous_id] = learner_agent
+            print(self.agent_list)
+            self.set_node_types()
+            self.agent_counts = self.get_current_agent_counts()
+
+    def play_game_process(self):
+        node1, node2 = my_graph.get_random_edge()
+        agent1 = my_graph.graph.nodes[node1]['data']
+        agent2 = my_graph.graph.nodes[node2]['data']
+        my_graph.play_game(agent1, agent2)
+
+    def social_learning_process(self):
+
+        learner_node = my_graph.get_random_node()
+        neighbor_node = my_graph.get_random_neighbor(learner_node)
+
+        learner_agent = my_graph.graph.nodes[learner_node]['data']
+        neighbor_agent = my_graph.graph.nodes[neighbor_node]['data']
+
+        if neighbor_agent.type != learner_agent.type:
+            my_graph.node_social_learning(learner_agent, neighbor_agent, a=0.5, b=0.5)
 
     def draw_network(self):
         plt.figure(figsize=(7, 7))
@@ -119,29 +123,28 @@ if __name__ == '__main__':
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        20,
+        10,
         0.9,
         100,
         2,
         nx.barabasi_albert_graph
     )
 
-    EDGE_PROB = 1
-    NODE_PROB = 1
+    PLAY_GAME_PROB = 1
+    LEARN_PROB = 1
+    my_graph.draw_network()
 
     for i in range(my_graph.generations):
-        node1, node2 = my_graph.get_random_edge(EDGE_PROB)
-        agent1 = my_graph.graph.nodes[node1]['data']
-        agent2 = my_graph.graph.nodes[node2]['data']
-        my_graph.play_game(agent1, agent2)
+        play_game_prob, learn_prob = np.random.uniform(size=2)
 
-        learner_node = my_graph.get_random_node(NODE_PROB)
-        my_graph.node_social_learning(learner_node, a=0.5, b=0.5)
+        if play_game_prob < PLAY_GAME_PROB:
+            my_graph.play_game_process()
 
-        print(my_graph.agent_counts)
+        if learn_prob < LEARN_PROB:
+            my_graph.social_learning_process()
+            # my_graph.draw_network()
+            print(my_graph.agent_counts)
 
-        if i % 5 == 0:
-            my_graph.draw_network()
 
 
 

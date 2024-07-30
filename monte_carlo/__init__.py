@@ -25,9 +25,9 @@ class MonteCarlo:
         initial_agent_counts = self.get_current_agent_counts()
         self.agent_counts = {agent_type: [initial_agent_counts[agent_type]] for agent_type in self.agent_types}
 
-    @staticmethod
-    def get_agent_counts():
-        return {agent_type: [count] for agent_type, count in agents.Agent.agent_dict.items()}
+    # @staticmethod
+    # def get_agent_counts():
+    #     return {agent_type: [count] for agent_type, count in agents.Agent.agent_dict.items()}
 
     def get_current_agent_counts(self):
         current_agent_counts = {agent_type: 0 for agent_type in self.agent_types}
@@ -50,9 +50,6 @@ class MonteCarlo:
         r1, r2 = self.game.get_reward(action1, action2)   # maybe want to have reward as an attribute for agent?
         self.reward_dict[type(agent1)] += max(0, r1)
         self.reward_dict[type(agent2)] += max(0, r2)
-
-        # self.reward_dict[type(agent1)] = max(0, self.reward_dict[type(agent1)]+r1)
-        # self.reward_dict[type(agent2)] = max(0, self.reward_dict[type(agent2)]+r2)
 
         agent1.payoff = agent1.get_new_avg_payoff(max(0, r1))
         agent2.payoff = agent2.get_new_avg_payoff(max(0, r2))
