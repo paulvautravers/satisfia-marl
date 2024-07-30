@@ -18,8 +18,8 @@ class Agent(ABC):
         self.id = Agent.agent_count  ##  The id should be unique irrespective of the type
         self.payoff = 0
         self.gamma = 1
-        Agent.agent_count += 1
-        Agent.agent_dict[self.type] += 1
+        # Agent.agent_count += 1
+        # Agent.agent_dict[self.type] += 1
 
     def __repr__(self):
         return f"{self.type.__name__}(ID={self.id})"
@@ -30,7 +30,7 @@ class Agent(ABC):
     @classmethod
     def reset(cls):
         Agent.agent_dict = defaultdict(int)
-        Agent.agent_count = 0
+        # Agent.agent_count = 0
 
     @property
     def type(self) -> Type[Agent]:
