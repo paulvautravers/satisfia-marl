@@ -47,10 +47,11 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
     def set_node_types(self):
         graph = self.graph_type(self.n, self.m)
+        self.color_map = []*self.n
         for node, i in enumerate(graph.nodes()):
             agent = self.agent_list[i]
             graph.nodes[node]['data'] = agent
-            self.color_map.append(self.color_agent_mapping[agent.type])
+            self.color_map = self.color_agent_mapping[agent.type]
 
         return graph
 
@@ -94,6 +95,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             print(self.agent_list)
             self.set_node_types()
             self.agent_counts = self.get_current_agent_counts()
+            my_graph.draw_network()
+
 
     def play_game_process(self):
         node1, node2 = my_graph.get_random_edge()
@@ -142,7 +145,6 @@ if __name__ == '__main__':
 
         if learn_prob < LEARN_PROB:
             my_graph.social_learning_process()
-            # my_graph.draw_network()
             print(my_graph.agent_counts)
 
 
