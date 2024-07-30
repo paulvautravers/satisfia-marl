@@ -24,11 +24,18 @@ class MonteCarlo:
         self.generations = generations
         self.agent_types = set([agent.type for agent in self.agent_list])
         self.reward_dict = defaultdict(int)
-        self.agent_counts = self.get_agent_counts()
+        # self.agent_counts = self.get_agent_counts
+        self.agent_counts = self.get_agent_counts_2()
 
     @staticmethod
     def get_agent_counts():
         return {agent_type: np.array([count]) for agent_type, count in agents.Agent.agent_dict.items()}
+
+    def get_agent_counts_2(self):
+        agent_counts = {agent_type: 0 for agent_type in self.agent_types}
+        for agent in self.agent_list:
+            agent_counts[agent.type] += 1
+        return agent_counts
 
     def __repr__(self):
         return(f"Number of agents: {len(self.agent_list)} \n"
@@ -39,7 +46,7 @@ class MonteCarlo:
 
     def play_game(self, agent1: agents.Agent, agent2: agents.Agent):
 
-        print(agent1)
+        # print(agent1)
 
         action1 = agent1.get_action(agent2)
         action2 = agent2.get_action(agent1)
@@ -47,6 +54,9 @@ class MonteCarlo:
         r1, r2 = self.game.get_reward(action1, action2)   # maybe want to have reward as an attribute for agent?
         self.reward_dict[type(agent1)] += max(0, r1)
         self.reward_dict[type(agent2)] += max(0, r2)
+
+        # self.reward_dict[type(agent1)] = max(0, self.reward_dict[type(agent1)]+r1)
+        # self.reward_dict[type(agent2)] = max(0, self.reward_dict[type(agent2)]+r2)
 
         agent1.payoff = agent1.get_new_avg_payoff(max(0, r1))
         agent2.payoff = agent2.get_new_avg_payoff(max(0, r2))
@@ -71,13 +81,16 @@ class MonteCarlo:
         self.agent_list = np.array([])
         if total_reward > 0:
             for agent_type, r in self.reward_dict.items():
+
                 n_agents = round((r/total_reward)*n_agents_total)
                 if n_agents > 0:
                     self.agent_list = np.append(self.agent_list,
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
-                self.agent_counts[agent_type] = np.append(self.agent_counts[agent_type], n_agents)  ## Redundant with the agent_dict of the Agent class
+                # self.agent_counts[agent_type] = np.append(self.agent_counts[agent_type], n_agents)  ## Redundant with the agent_dict of the Agent class
+            new_agent_counts = self.get_agent_counts_2()
 
+            self.agent_counts = new_agent_counts
 
     def iterate_generations(self, **kwargs):
 
@@ -89,8 +102,9 @@ class MonteCarlo:
 
         self.plot_agent_counts(**kwargs)
 
-        agent_counts_final = {agent_type: counts[-1] for agent_type, counts in self.agent_counts.items()}
-        return agent_counts_final
+        # agent_counts_final = {agent_type: counts[-1] for agent_type, counts in self.agent_counts.items()}
+        print(self.agent_counts)
+        # return agent_counts_final
 
     def plot_agent_counts(self, **kwargs):
         if kwargs['plot'] == True:
@@ -98,6 +112,7 @@ class MonteCarlo:
             total_agents = len(self.agent_list)
 
             for agent_type, agent_counts in self.agent_counts.items():
+                print(agent_type, agent_counts)
                 if 'agent_to_plot' not in kwargs.keys():
                     ax.plot(agent_counts/total_agents, label=agent_type.__name__)
                 elif kwargs['agent_to_plot'] == agent_type:
@@ -115,8 +130,8 @@ combined_strategies = {SatisfiaAgent: SATISFIA_SET, MaximiserAgent: MAXIMISER_SE
 
 if __name__ == '__main__':
 
-    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(8)])
-    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(2)])
+    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(50)])
+    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(20)])
     agent_population = np.append(satisfias, maximisers)
     generations = 100
     mc = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)

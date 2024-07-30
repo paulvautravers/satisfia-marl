@@ -90,7 +90,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         print("neighbor_payoff", neighbor_agent.payoff)
         print("learner_payoff", learner_agent.payoff)
 
-        p_switch = 1/(1+np.exp(a+b*(neighbor_agent.payoff - learner_agent.payoff)))
+        p_switch = 1/(1+np.exp(a+b*(learner_agent.payoff - neighbor_agent.payoff)))
 
         print("p_switch", p_switch)
 
