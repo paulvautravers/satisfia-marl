@@ -100,14 +100,14 @@ if __name__ == '__main__':
                     }
 
     maximiser_set = {SatisfiaAgent: {'actions': options,
-                                  'probabilities': [1, 0, 0, 0, 0, 0]},
+                                  'probabilities': [0, 1, 0, 0, 0, 0]},
                      MaximiserAgent: {'actions': options,
                                    'probabilities': [0, 0, 0, 0, 0, 1]}
                      }
 
     BIG_STRATEGY_SET = {SatisfiaAgent: satisfia_set, MaximiserAgent: maximiser_set}  # we should make this into a table or smth
-    satisfias = np.array([agents.SatisfiaAgent(satisfia_set) for _ in range(73)])
-    maximisers = np.array([agents.MaximiserAgent(maximiser_set) for _ in range(27)])
+    satisfias = np.array([agents.SatisfiaAgent(satisfia_set) for _ in range(720)])
+    maximisers = np.array([agents.MaximiserAgent(maximiser_set) for _ in range(280)])
     AGENT_LIST = np.append(satisfias, maximisers)
     GAME = JobstGame
     GENERATIONS = 100

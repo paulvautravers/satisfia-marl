@@ -62,7 +62,7 @@ if __name__ == '__main__':
     options = JobstGame.row_options
     maximiser = MaximiserAgent({
         SatisfiaAgent: {'actions': options,
-                    'probabilities': [1, 0, 0, 0, 0, 0]},  # I changed this one
+                    'probabilities': [0, 1, 0, 0, 0, 0]},  # I changed this one
         MaximiserAgent: {'actions': options,
                     'probabilities': [0, 0, 0, 0, 0, 1]}
     })
