@@ -30,20 +30,20 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                  n_agents: int,
                  satisfia_share: float,
                  generations: int,
-                 m_edges_per_node: int,
-                 graph_type: callable,
-                 draw_network_interval: int):
+                 base_graph: nx.Graph,
+                 draw_network_interval: int,
+                 learn_param_a: float = 0.5,
+                 learn_param_b: float = 0.5):
 
         agent_list = gen_agent_population(n_agents, satisfia_share)
         super().__init__(game, strategy_dict, agent_list, generations)
         self.n_agents = n_agents
         self.satisfia_share = satisfia_share
-        self.m_edges_per_node = m_edges_per_node
-        self.satisfia_share = satisfia_share
-        self.graph_type = graph_type
         self.color_map = []
-        self.graph = self.initialize_graph()
+        self.graph = self.initialize_graph(base_graph)
         self.draw_network_interval = draw_network_interval
+        self.learn_param_a = learn_param_a
+        self.learn_param_b = learn_param_b
 
     @property
     def nodes(self):
@@ -58,11 +58,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                 return
         raise ValueError(f"Can't update agent: ID {id} not found in agent list.")
 
-    def initialize_graph(self):
-        graph = self.graph_type(self.n_agents, self.m_edges_per_node)
+    def initialize_graph(self, base_graph: nx.Graph):
         for i, agent in enumerate(self.agent_list):
-            graph.nodes[i]['data'] = agent
-        return graph
+            base_graph.nodes[i]['data'] = agent
+        return base_graph
 
     def get_random_edge(self):
         edges = np.array(self.graph.edges)
@@ -79,30 +78,20 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         neighbor = random.choice([n for n in neighbors])
         return neighbor
 
-    def node_social_learning(self, learner_agent, neighbor_agent, a: float, b: float) -> None:
+    def node_social_learning(self, learner_agent: agents.Agent, neighbor_agent: agents.Agent) -> None:
 
-        p_switch = 1/(1+np.exp(a+b*(learner_agent.payoff - neighbor_agent.payoff)))
-
-        print("p_switch", p_switch)
+        p_switch = 1/(1+np.exp(self.learn_param_a + self.learn_param_b*(learner_agent.payoff - neighbor_agent.payoff)))
         r = np.random.uniform()
 
         if r < p_switch:
 
+            print("--------------------------------------------------------------------")
             print(f"Switch between: Learner {learner_agent} with {learner_agent.payoff}"
                   f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
-            print(f"old learner: {learner_agent}")
-            print(f"old neighbor: {neighbor_agent}")
-            # previous_payoff = learner_agent.payoff
-            # previous_id = learner_agent.id
-            # learner_agent = deepcopy(neighbor_agent)
-            # learner_agent.payoff = previous_payoff
-            # learner_agent.id = previous_id
             learner_agent = learner_agent.transmute(neighbor_agent)
-            print(f"new learner: {learner_agent}")
-            print(f"new neighbor: {neighbor_agent}")
+            print(f"new learner: {learner_agent}, new neighbor: {neighbor_agent}")
 
             self.set_agent_by_id(learner_agent.id, learner_agent)
-            print(self.agent_list)
 
     def play_game_process(self):
         node1, node2 = my_graph.get_random_edge()
@@ -111,15 +100,14 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         my_graph.play_game(agent1, agent2)
 
     def social_learning_process(self):
+        learner_node = self.get_random_node()
+        neighbor_node = self.get_random_neighbor(learner_node)
 
-        learner_node = my_graph.get_random_node()
-        neighbor_node = my_graph.get_random_neighbor(learner_node)
-
-        learner_agent = my_graph.graph.nodes[learner_node]['data']
-        neighbor_agent = my_graph.graph.nodes[neighbor_node]['data']
+        learner_agent = self.graph.nodes[learner_node]['data']
+        neighbor_agent = self.graph.nodes[neighbor_node]['data']
 
         if neighbor_agent.type != learner_agent.type:
-            my_graph.node_social_learning(learner_agent, neighbor_agent, a=0.5, b=0.5)
+            self.node_social_learning(learner_agent, neighbor_agent)
 
     def draw_network(self, generation: int):
         color_map = [agent.type.color for agent in self.agent_list]
@@ -161,34 +149,21 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
 
 if __name__ == '__main__':
+
+    N_AGENTS = 100
+    EDGES_PER_NODE = 2
+    BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
+
+    BASE_FULL = nx.complete_graph(N_AGENTS)
+
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        10,
-        0.9,
-        100,
-        2,
-        nx.barabasi_albert_graph,
-        10
+        N_AGENTS,
+        0.65,
+        1000,
+        BASE_FULL,
+        1000
     )
     my_graph.iterate_generations(1, 0.5, True)
-    #
-    # PLAY_GAME_PROB = 1
-    # LEARN_PROB = 1
-    # my_graph.draw_network()
-    #
-    # for i in range(my_graph.generations):
-    #     play_game_prob, learn_prob = np.random.uniform(size=2)
-    #
-    #     if play_game_prob < PLAY_GAME_PROB:
-    #         my_graph.play_game_process()
-    #
-    #     if learn_prob < LEARN_PROB:
-    #         my_graph.social_learning_process()
-    #         print(my_graph.agent_counts)
-    #
-
-
-
-
 
