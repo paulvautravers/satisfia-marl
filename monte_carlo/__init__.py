@@ -35,6 +35,20 @@ class MonteCarlo:
             current_agent_counts[agent.type] += 1
         return current_agent_counts
 
+    def store_agent_counts(self):
+        current_agent_counts = self.get_current_agent_counts()
+        for agent_type, count_list in self.agent_counts.items():
+            self.agent_counts[agent_type].append(current_agent_counts[agent_type])
+
+    def update_agent_by_id(self, id: int, new_agent: Agent):
+        assert id == new_agent.id, "New agent must have the given ID as an attribute"
+        for i, agent in enumerate(self.agent_list):
+            if agent.id == id:
+                self.agent_list[i] = new_agent
+                return
+        raise ValueError(f"Can't update agent: ID {id} not found in agent list.")
+
+
     def __repr__(self):
         return(f"Number of agents: {len(self.agent_list)} \n"
                f"Generations: {self.generations} \n")
