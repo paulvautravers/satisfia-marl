@@ -25,10 +25,6 @@ class MonteCarlo:
         initial_agent_counts = self.get_current_agent_counts()
         self.agent_counts = {agent_type: [initial_agent_counts[agent_type]] for agent_type in self.agent_types}
 
-    # @staticmethod
-    # def get_agent_counts():
-    #     return {agent_type: [count] for agent_type, count in agents.Agent.agent_dict.items()}
-
     def get_current_agent_counts(self):
         current_agent_counts = {agent_type: 0 for agent_type in self.agent_types}
         for agent in self.agent_list:
@@ -40,7 +36,7 @@ class MonteCarlo:
         for agent_type, count_list in self.agent_counts.items():
             self.agent_counts[agent_type].append(current_agent_counts[agent_type])
 
-    def update_agent_by_id(self, id: int, new_agent: Agent):
+    def set_agent_by_id(self, id: int, new_agent: Agent):
         assert id == new_agent.id, "New agent must have the given ID as an attribute"
         for i, agent in enumerate(self.agent_list):
             if agent.id == id:
@@ -81,8 +77,6 @@ class MonteCarlo:
         n_agents_total = len(self.agent_list)
 
         Agent.reset()
-        SatisfiaAgent.reset()
-        MaximiserAgent.reset()
 
         self.agent_list = np.array([])
         if total_reward > 0:

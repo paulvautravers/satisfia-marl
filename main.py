@@ -19,8 +19,6 @@ def iterate_over_n0(max_n0: int, game: games.Game, combined_strategies: dict,
         mc = _mc(game, combined_strategies, population, generations)
         mc.iterate_generations(**kwargs)
 
-        SatisfiaAgent.reset()
-        MaximiserAgent.reset()
         Agent.reset()
 
 def legend_without_duplicate_labels(axis):

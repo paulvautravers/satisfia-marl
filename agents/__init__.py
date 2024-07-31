@@ -11,15 +11,26 @@ from globals import *
 
 class Agent(ABC):
 
-    agent_dict = defaultdict(int)  # initialised to zero
     agent_count = 0
 
+    @property
+    @classmethod
+    @abstractmethod
+    def color(cls):
+        """Each agent type needs to have its own associated color for plotting"""
+        pass
+
     def __init__(self):
-        self.id = Agent.agent_count  ##  The id should be unique irrespective of the type
+        self.id = Agent.agent_count
         self.payoff = 0
         self.gamma = 1
         Agent.agent_count += 1
-        # Agent.agent_dict[self.type] += 1
+
+    def transmute(self, target_agent: Agent) -> Agent:
+        new_self = copy.deepcopy(target_agent)
+        new_self.id = self.id
+        new_self.payoff = self.payoff
+        return new_self
 
     def __repr__(self):
         return f"{self.type.__name__}(ID={self.id})"
@@ -29,8 +40,7 @@ class Agent(ABC):
 
     @classmethod
     def reset(cls):
-        Agent.agent_dict = defaultdict(int)
-        # Agent.agent_count = 0
+        Agent.agent_count = 0
 
     @property
     def type(self) -> Type[Agent]:
@@ -48,14 +58,10 @@ class Agent(ABC):
     def get_new_avg_payoff(self, new_payoff: float):
         return self.gamma*self.payoff + new_payoff
 
-    # def __deepcopy__(self, memodict={}):
-    #     copy_obj = copy.deepcopy(self)
-    #     # copy_obj.payoff = 0
-    #
-    #     return copy_obj
 
 
 class SatisfiaAgent(Agent):
+    color = 'blue'
 
     def __init__(self, strategy_set: dict):
         super().__init__()
@@ -69,6 +75,7 @@ class SatisfiaAgent(Agent):
 
 
 class MaximiserAgent(Agent):
+    color = 'red'
 
     def __init__(self, strategy_set: dict):
         super().__init__()
