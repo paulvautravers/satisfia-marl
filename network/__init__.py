@@ -1,22 +1,21 @@
 import random
-from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
+from matplotlib.patches import Patch
 
-import agents
-from agents import SatisfiaAgent, MaximiserAgent, SATISFIA_SET, MAXIMISER_SET
+from agents import SatisfiaAgent, MaximiserAgent, SATISFIA_SET, MAXIMISER_SET, Agent
 from games import Game, JOBST_GAME
 from monte_carlo import MonteCarlo, combined_strategies
 
 
-def gen_agent_population(n_agents: int, satisfia_share: float) -> npt.NDArray[agents.Agent]:
+def gen_agent_population(n_agents: int, satisfia_share: float) -> npt.NDArray[Agent]:
     satisfia_count, maximiser_count = round(n_agents*satisfia_share), round(n_agents*(1-satisfia_share))
 
-    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(satisfia_count)])
-    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(maximiser_count)])
+    satisfias = np.array([SatisfiaAgent(SATISFIA_SET) for _ in range(satisfia_count)])
+    maximisers = np.array([MaximiserAgent(MAXIMISER_SET) for _ in range(maximiser_count)])
     agent_population = np.append(satisfias, maximisers)
     np.random.shuffle(agent_population)
     return agent_population
@@ -27,7 +26,6 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
     def __init__(self,
                  game: Game,
                  strategy_dict: dict,
-                 n_agents: int,
                  satisfia_share: float,
                  generations: int,
                  base_graph: nx.Graph,
@@ -35,11 +33,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                  learn_param_a: float = 0.5,
                  learn_param_b: float = 0.5):
 
-        agent_list = gen_agent_population(n_agents, satisfia_share)
+        self.n_agents = len(base_graph.nodes())
+        agent_list = gen_agent_population(self.n_agents, satisfia_share)
         super().__init__(game, strategy_dict, agent_list, generations)
-        self.n_agents = n_agents
         self.satisfia_share = satisfia_share
-        self.color_map = []
         self.graph = self.initialize_graph(base_graph)
         self.draw_network_interval = draw_network_interval
         self.learn_param_a = learn_param_a
@@ -49,7 +46,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
     def nodes(self):
         return np.array(self.graph.nodes(data=True))
 
-    def set_agent_by_id(self, id: int, new_agent: agents.Agent):
+    def set_agent_by_id(self, id: int, new_agent: Agent):
         assert id == new_agent.id, "New agent must have the given ID as an attribute"
         for i, agent in enumerate(self.agent_list):
             if agent.id == id:
@@ -78,7 +75,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         neighbor = random.choice([n for n in neighbors])
         return neighbor
 
-    def node_social_learning(self, learner_agent: agents.Agent, neighbor_agent: agents.Agent) -> None:
+    def node_social_learning(self, learner_agent: Agent, neighbor_agent: Agent) -> None:
 
         p_switch = 1/(1+np.exp(self.learn_param_a + self.learn_param_b*(learner_agent.payoff - neighbor_agent.payoff)))
         r = np.random.uniform()
@@ -94,10 +91,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             self.set_agent_by_id(learner_agent.id, learner_agent)
 
     def play_game_process(self):
-        node1, node2 = my_graph.get_random_edge()
-        agent1 = my_graph.graph.nodes[node1]['data']
-        agent2 = my_graph.graph.nodes[node2]['data']
-        my_graph.play_game(agent1, agent2)
+        node1, node2 = self.get_random_edge()
+        agent1 = self.graph.nodes[node1]['data']
+        agent2 = self.graph.nodes[node2]['data']
+        self.play_game(agent1, agent2)
 
     def social_learning_process(self):
         learner_node = self.get_random_node()
@@ -119,7 +116,9 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             self.graph,
             pos={node: (coords[0], coords[1] + 0.05) for node, coords in pos.items()}
         )
-        plt.title(f"Barabási–Albert Network (generation {generation})")
+        plt.title(f"Network (generation {generation})")
+        plt.legend(handles=[Patch(facecolor=agent_type.color, edgecolor='black', label=agent_type.__name__)
+                            for agent_type in self.agent_types])
         plt.show()
 
     def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
@@ -159,10 +158,9 @@ if __name__ == '__main__':
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        N_AGENTS,
         0.65,
         1000,
-        BASE_FULL,
+        BASE_BARABASI,
         1000
     )
     my_graph.iterate_generations(1, 0.5, True)
