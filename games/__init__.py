@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 from matplotlib import pyplot as plt
 
-from agents import Agent, MaximiserAgent, SatisfiaAgent
+from agents import Agent, MaximiserAgent, SatisfiaAgent, SATISFIA_SET, MAXIMISER_SET
 
 
 class Game:
@@ -42,6 +42,7 @@ class Game:
         return actions, rewards
 
 
+# Game related globals
 jobst_game = np.array([-2, -2, -1, -3, 0, -4, 1, -4, 3, -4, 7, -1,
                        -3, -1, 0, 0, 0, -1, 1, -2, 3, -2, 6, -4,
                        -4, 0, -1, 0, -1, -1, 1, 0, 4, 1, 6, -1,
@@ -50,30 +51,18 @@ jobst_game = np.array([-2, -2, -1, -3, 0, -4, 1, -4, 3, -4, 7, -1,
                        -1, 7, -4, 6, -1, 6, 1, 5, 3, 5, 5, 5])
 
 jobst_game = jobst_game.reshape(6, 6, 2)
-JobstGame = Game(jobst_game)
+JOBST_GAME = Game(jobst_game)
 
 
 if __name__ == '__main__':
     prisoners_dilemma = np.array([[(1, 1), (3, 0)], [(0, 3), (2, 2)]], dtype=(int, int))
-    # prisoners_dilemma = prisoners_dilemma.reshape((2, 2))
     defaultGame = Game(prisoners_dilemma)
 
     # Iterated JobstGame example
-    options = JobstGame.row_options
-    maximiser = MaximiserAgent({
-        SatisfiaAgent: {'actions': options,
-                    'probabilities': [0, 1, 0, 0, 0, 0]},  # I changed this one
-        MaximiserAgent: {'actions': options,
-                    'probabilities': [0, 0, 0, 0, 0, 1]}
-    })
-    satisfia = SatisfiaAgent({
-        SatisfiaAgent: {'actions': options,
-                    'probabilities': [0, 0, 0, 1, 0, 0]},
-        MaximiserAgent: {'actions': options,
-                    'probabilities': [0, 1, 0, 0, 0, 0]}
-    })
+    maximiser = MaximiserAgent(MAXIMISER_SET)
+    satisfia = SatisfiaAgent(SATISFIA_SET)
 
-    actions, rewards = JobstGame.play_n_rounds(10, satisfia, maximiser, plot=True)
+    actions, rewards = JOBST_GAME.play_n_rounds(10, satisfia, maximiser, plot=True)
 
     print(actions)
     print(rewards)
