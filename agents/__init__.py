@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import copy
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import Type
-import numpy as np
 
-from globals import *
+import numpy as np
 
 
 class Agent(ABC):

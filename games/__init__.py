@@ -1,9 +1,9 @@
 import numpy as np
 import numpy.typing as npt
 from matplotlib import pyplot as plt
-from globals import *
 
 from agents import Agent, MaximiserAgent, SatisfiaAgent, SATISFIA_SET, MAXIMISER_SET
+
 
 class Game:
 
@@ -52,6 +52,7 @@ jobst_game = np.array([-2, -2, -1, -3, 0, -4, 1, -4, 3, -4, 7, -1,
 
 jobst_game = jobst_game.reshape(6, 6, 2)
 JOBST_GAME = Game(jobst_game)
+
 
 if __name__ == '__main__':
     prisoners_dilemma = np.array([[(1, 1), (3, 0)], [(0, 3), (2, 2)]], dtype=(int, int))
