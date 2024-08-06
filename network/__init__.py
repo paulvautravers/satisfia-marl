@@ -1,4 +1,5 @@
 import random
+from typing import List, Type
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -41,6 +42,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         self.draw_network_interval = draw_network_interval
         self.learn_param_a = learn_param_a
         self.learn_param_b = learn_param_b
+        self.closeness_centrality = {agent_type: [self.get_avg_closeness_centrality(agent_type)]
+                                     for agent_type in self.agent_types}
 
     @property
     def nodes(self):
@@ -130,10 +133,12 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             # Todo: rewiring
 
             self.store_agent_counts()
+            self.store_avg_closeness_centrality()
             if i_gen % self.draw_network_interval == 0:
                 self.draw_network(i_gen)
         if plot:
             self.plot_agent_counts()
+            self.plot_average_centrality()
 
     def count_internal_edges(self, nodes):
         subgraph = self.graph.subgraph(nodes)
@@ -145,8 +150,14 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             count += len([neighbor for neighbor in self.graph.neighbors(node) if neighbor in nodes_b])
         return count
 
-    def get_closeness_centrality(self, nodes=None):
-        return nx.closeness_centrality(self.graph, u=nodes)
+    def get_avg_closeness_centrality(self, agent_type: Type[Agent] = None):
+        if agent_type is None:
+            return nx.closeness_centrality(self.graph)
+        else:
+            closeness_centralities = [nx.closeness_centrality(self.graph, u=node_key)
+                                      for node_key, node_data in self.graph.nodes(data=True)
+                                      if node_data['data'].type == agent_type]
+            return np.array(closeness_centralities).mean()
 
     def get_avg_degree(self, agent_types=None):
         agent_types = self.agent_types if agent_types is None else agent_types
@@ -155,6 +166,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         avg_deg = sum(degrees)/len(degrees)
         return avg_deg
 
+    def store_avg_closeness_centrality(self):
+        for agent_type in self.agent_types:
+            self.closeness_centrality[agent_type].append(self.get_avg_closeness_centrality(agent_type))
+
     def plot_agent_counts(self):
         for agent_type, counts in self.agent_counts.items():
             plt.plot(np.array(counts) / self.n_agents, label=agent_type.__name__)
@@ -162,6 +177,15 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         plt.xlabel('Generations')
         plt.ylabel('Population')
         plt.ylim([0, 1])
+        plt.legend()
+        plt.show()
+
+    def plot_average_centrality(self):
+        for agent_type in self.agent_types:
+            plt.plot(self.closeness_centrality[agent_type], label=agent_type.__name__)
+        plt.title('Plot of average closeness centrality of nodes by agent type')
+        plt.xlabel('Generations')
+        plt.ylabel('Average closeness centrality')
         plt.legend()
         plt.show()
 
@@ -183,4 +207,5 @@ if __name__ == '__main__':
         50
     )
     my_graph.iterate_generations(1, 0.5, True)
+    my_graph.get_avg_closeness_centrality(MaximiserAgent)
 
