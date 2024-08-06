@@ -124,6 +124,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
     def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
         for i_gen in range(self.generations):
+            print(self.get_avg_degree([MaximiserAgent]))
             if random.random() < p_play_game:
                 self.play_game_process()
             if random.random() < p_social_learning:
@@ -136,6 +137,25 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         if plot:
             self.plot_agent_counts()
 
+    def count_internal_edges(self, nodes):
+        subgraph = self.graph.subgraph(nodes)
+        return subgraph.number_of_edges()
+
+    def count_external_edges(self, nodes_a, nodes_b):
+        count = 0
+        for node in nodes_a:
+            count += len([neighbor for neighbor in self.graph.neighbors(node) if neighbor in nodes_b])
+        return count
+
+    def get_closeness_centrality(self, nodes=None):
+        return nx.closeness_centrality(self.graph, u=nodes)
+
+    def get_avg_degree(self, agent_types=None):
+        agent_types = self.agent_types if agent_types is None else agent_types
+        degrees = [val for key, val in dict(self.graph.degree()).items()
+                   if self.graph.nodes[key]['data'].type in agent_types]
+        avg_deg = sum(degrees)/len(degrees)
+        return avg_deg
 
     def plot_agent_counts(self):
         for agent_type, counts in self.agent_counts.items():
@@ -150,7 +170,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
 if __name__ == '__main__':
 
-    N_AGENTS = 100
+    N_AGENTS = 30
     EDGES_PER_NODE = 2
     BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
 
@@ -161,9 +181,9 @@ if __name__ == '__main__':
         combined_strategies,
         N_AGENTS,
         0.65,
-        1000,
-        BASE_FULL,
-        1000
+        100,
+        BASE_BARABASI,
+        50
     )
     my_graph.iterate_generations(1, 0.5, True)
 
