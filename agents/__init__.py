@@ -1,28 +1,46 @@
 from __future__ import annotations
 
+import copy
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Type
-
 import numpy as np
+
+from globals import *
 
 
 class Agent(ABC):
 
-    agent_dict = defaultdict(int)  # initialised to zero
     agent_count = 0
 
+    @property
+    @classmethod
+    @abstractmethod
+    def color(cls):
+        """Each agent type needs to have its own associated color for plotting"""
+        pass
+
     def __init__(self):
-        self.id = Agent.agent_count  ##  The id should be unique irrespective of the type
+        self.id = Agent.agent_count
+        self.payoff = 0
+        self.gamma = 1
         Agent.agent_count += 1
-        Agent.agent_dict[self.type] += 1
+
+    def transmute(self, target_agent: Agent) -> Agent:
+        new_self = copy.deepcopy(target_agent)
+        new_self.id = self.id
+        new_self.payoff = self.payoff
+        return new_self
 
     def __repr__(self):
-        return (f"Type: {self.type.__name__} \n"
-                f"ID: {self.id} \n")
+        return f"{self.type.__name__}(ID={self.id})"
 
     def __str__(self):
         return f"{self.type.__name__}(ID={self.id})"
+
+    @classmethod
+    def reset(cls):
+        Agent.agent_count = 0
 
     @property
     def type(self) -> Type[Agent]:
@@ -32,12 +50,18 @@ class Agent(ABC):
     def label(self) -> str:
         return self.type.__name__
 
-    @abstractmethod
+    # @abstractmethod
     def get_action(self, opponent: Agent) -> int:
-        raise NotImplementedError
+        # raise NotImplementedError
+        pass
+
+    def get_new_avg_payoff(self, new_payoff: float):
+        return self.gamma*self.payoff + new_payoff
+
 
 
 class SatisfiaAgent(Agent):
+    color = 'blue'
 
     def __init__(self, strategy_set: dict):
         super().__init__()
@@ -45,12 +69,13 @@ class SatisfiaAgent(Agent):
 
     def get_action(self, opponent: Agent) -> int:
         strategy = self.strategy_set[opponent.type]
-        action = np.random.choice(strategy['actions'],
-                                  p=strategy['probabilities'])
+        action = np.random.choice(range(len(strategy)), p=strategy)
+
         return action
 
 
 class MaximiserAgent(Agent):
+    color = 'red'
 
     def __init__(self, strategy_set: dict):
         super().__init__()
@@ -58,36 +83,29 @@ class MaximiserAgent(Agent):
 
     def get_action(self, opponent: Agent) -> int:
         strategy = self.strategy_set[opponent.type]
-        action = np.random.choice(strategy['actions'],
-                                  p=strategy['probabilities'])
+        action = np.random.choice(range(len(strategy)), p=strategy)
         return action
 
 
+# Agent related globals
+MAXIMISER_SET = {SatisfiaAgent: [0, 1, 0, 0, 0, 0], MaximiserAgent: [0, 0, 0, 0, 0, 1]}
+SATISFIA_SET = {SatisfiaAgent: [0, 0, 0, 1, 0, 0], MaximiserAgent: [0, 1, 0, 0, 0, 0]}
+
 if __name__ == '__main__':
 
-    # 'probabilities': (1/len(options)*np.ones_like(options))}
+    satisfia = SatisfiaAgent(strategy_set=SATISFIA_SET)
+    maximiser = MaximiserAgent(strategy_set=MAXIMISER_SET)
 
-    options = [0, 1, 2, 3, 4, 5]
-    satisfia_set = {'satisfia': {'actions': options,
-                                 'probabilities': [0, 0, 0, 1, 0, 0]},
-                    'maximiser': {'actions': options,
-                                  'probabilities': [0, 1, 0, 0, 0, 0]}
-                    }
-
-    maximiser_set = {'satisfia': {'actions': options,
-                                  'probabilities': [0, 1, 0, 0, 0, 0]},
-                     'maximiser': {'actions': options,
-                                   'probabilities': [0, 0, 0, 0, 0, 1]}
-                     }
-
-    satisfier = SatisfiaAgent(strategy_set=satisfia_set)
-    maximiser = MaximiserAgent(strategy_set=maximiser_set)
-
-    satisfier2 = SatisfiaAgent(strategy_set=satisfia_set)
-    print(satisfier2.type)
-    print(maximiser.type)
-    print(repr(satisfier))
+    print(satisfia)
     print(maximiser)
+
+    class_type = type(maximiser)
+    new_agent = Agent() #class_type.__new__(class_type)
+    new_agent.__class__ = class_type
+
+    print(new_agent)
+
+    # print(SATISFIA_SET)
 
 
 
