@@ -1,10 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
+
 import games
-from monte_carlo import MonteCarlo as _mc, combined_strategies
-from collections import defaultdict
-from games import JOBST_GAME
 from agents import Agent, SatisfiaAgent, MaximiserAgent, SATISFIA_SET, MAXIMISER_SET
+from games import JOBST_GAME
+from monte_carlo import MonteCarlo as _mc, combined_strategies
 
 
 def iterate_over_n0(max_n0: int, game: games.Game, combined_strategies: dict,

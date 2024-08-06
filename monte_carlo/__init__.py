@@ -58,8 +58,10 @@ class MonteCarlo:
         action2 = agent2.get_action(agent1)
 
         r1, r2 = self.game.get_reward(action1, action2)   # maybe want to have reward as an attribute for agent?
-        self.reward_dict[type(agent1)] += max(0, r1)
-        self.reward_dict[type(agent2)] += max(0, r2)
+
+        self.reward_dict[type(agent1)] = max(0, self.reward_dict[type(agent1)] + r1)
+        self.reward_dict[type(agent2)] = max(0, self.reward_dict[type(agent2)] + r2)
+
 
         agent1.payoff = agent1.get_new_avg_payoff(max(0, r1))
         agent2.payoff = agent2.get_new_avg_payoff(max(0, r2))
