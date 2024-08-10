@@ -104,12 +104,15 @@ class MonteCarlo:
         return agent_counts_final
 
     def plot_agent_counts(self, **kwargs):
+        print("hello from monte carlo")
         if kwargs['plot'] == True:
             fig, ax = kwargs['fig'], kwargs['ax']
             total_agents = len(self.agent_list)
 
             for agent_type, agent_counts in self.agent_counts.items():
                 if 'agent_to_plot' not in kwargs.keys():
+                    print(fig, ax)
+                    print(agent_counts, total_agents)
                     ax.plot(np.array(agent_counts)/total_agents, label=agent_type.__name__)
                 elif kwargs['agent_to_plot'] == agent_type:
                     ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c='b', alpha=0.3)

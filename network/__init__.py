@@ -18,7 +18,7 @@ def gen_agent_population(n_agents: int, satisfia_share: float) -> npt.NDArray[Ag
     satisfias = np.array([SatisfiaAgent(SATISFIA_SET) for _ in range(satisfia_count)])
     maximisers = np.array([MaximiserAgent(MAXIMISER_SET) for _ in range(maximiser_count)])
     agent_population = np.append(satisfias, maximisers)
-    np.random.shuffle(agent_population)
+    # np.random.shuffle(agent_population)
     return agent_population
 
 
@@ -59,6 +59,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         raise ValueError(f"Can't update agent: ID {id} not found in agent list.")
 
     def initialize_graph(self, base_graph: nx.Graph):
+        np.random.shuffle(self.agent_list)
         for i, agent in enumerate(self.agent_list):
             base_graph.nodes[i]['data'] = agent
         return base_graph
@@ -124,7 +125,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                             for agent_type in self.agent_types])
         plt.show()
 
-    def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
+    def iterate_generations(self, p_play_game: float, p_social_learning: float, **kwargs):
         for i_gen in range(self.generations):
             if random.random() < p_play_game:
                 self.play_game_process()
@@ -134,11 +135,14 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
             self.store_agent_counts()
             self.store_avg_closeness_centrality()
-            if i_gen % self.draw_network_interval == 0:
-                self.draw_network(i_gen)
-        if plot:
-            self.plot_agent_counts()
-            self.plot_average_centrality()
+            if kwargs['plot'] and i_gen % self.draw_network_interval == 0:
+                # self.draw_network(i_gen)
+                pass
+
+        print(kwargs)
+        if kwargs['plot']:
+            super().plot_agent_counts(**kwargs)
+            # self.plot_average_centrality()
 
     def count_internal_edges(self, nodes):
         subgraph = self.graph.subgraph(nodes)
