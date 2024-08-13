@@ -144,7 +144,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
         logger.debug(kwargs)
         if kwargs['plot']:
-            super().plot_agent_counts(**kwargs)
+            if 'fig' in kwargs:
+                super().plot_agent_counts(**kwargs)
+            else:
+                self.plot_agent_counts()
             # self.plot_average_centrality()
 
     def count_internal_edges(self, nodes):
