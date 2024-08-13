@@ -104,7 +104,6 @@ class MonteCarlo:
         return agent_counts_final
 
     def plot_agent_counts(self, **kwargs):
-        print("hello from monte carlo")
         if kwargs['plot'] == True:
             fig, ax = kwargs['fig'], kwargs['ax']
             total_agents = len(self.agent_list)
