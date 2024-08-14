@@ -110,6 +110,8 @@ class MonteCarlo:
 
             for agent_type, agent_counts in self.agent_counts.items():
                 if 'agent_to_plot' not in kwargs.keys():
+                    print(fig, ax)
+                    print(agent_counts, total_agents)
                     ax.plot(np.array(agent_counts)/total_agents, label=agent_type.__name__)
                 elif kwargs['agent_to_plot'] == agent_type:
                     ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c='b', alpha=0.3)
