@@ -41,7 +41,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         agent_list = gen_agent_population(self.n_agents, satisfia_share)
         super().__init__(game, strategy_dict, agent_list, generations)
         self.satisfia_share = satisfia_share
-        self.graph = self.initialize_graph(base_graph)
+        self.graph = self.initialize_graph(base_graph.copy())
         self.draw_network_interval = draw_network_interval
         self.learn_param_a = learn_param_a
         self.learn_param_b = learn_param_b
@@ -144,7 +144,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
         logger.debug(kwargs)
         if kwargs['plot']:
-            super().plot_agent_counts(**kwargs)
+            if 'fig' in kwargs:
+                super().plot_agent_counts(**kwargs)
+            else:
+                self.plot_agent_counts()
             # self.plot_average_centrality()
 
     def count_internal_edges(self, nodes):

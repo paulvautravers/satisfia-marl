@@ -84,10 +84,10 @@ class MaximiserAgent(Agent):
         action = np.random.choice(range(len(strategy)), p=strategy)
         return action
 
-
 # Agent related globals
 MAXIMISER_SET = {SatisfiaAgent: [0, 1, 0, 0, 0, 0], MaximiserAgent: [0, 0, 0, 0, 0, 1]}
 SATISFIA_SET = {SatisfiaAgent: [0, 0, 0, 1, 0, 0], MaximiserAgent: [0, 1, 0, 0, 0, 0]}
+
 
 if __name__ == '__main__':
 
