@@ -1,5 +1,10 @@
 import random
 from collections import defaultdict
+from typing import Callable, Concatenate, TypeVar, ParamSpec
+
+Param = ParamSpec("Param")
+RetType = TypeVar("RetType")
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,15 +18,24 @@ from games import Game, JOBST_GAME
 class MonteCarlo:
 
     def __init__(self, game: Game, strategy_set: dict,
-                 agent_list: npt.NDArray[agents.Agent] = np.array([]),
+                 agent_list: npt.NDArray[agents.Agent],
                  generations: int = 100):
 
+        #These attributes remain unchanged
         self.game = game
-        self.agent_list = agent_list
         self.strategy_set = strategy_set
         self.generations = generations
+
+        self.initial_agent_list = agent_list
+        self.agent_list, self.agent_types, self.reward_dict, self.agent_counts = None, None, None, None
+        self.setup_agent_list_attributes()
+
+    def setup_agent_list_attributes(self):
+
+        self.agent_list = self.initial_agent_list
         self.agent_types = set([agent.type for agent in self.agent_list])
         self.reward_dict = defaultdict(int)
+
         initial_agent_counts = self.get_current_agent_counts()
         self.agent_counts = {agent_type: [initial_agent_counts[agent_type]] for agent_type in self.agent_types}
 
@@ -35,6 +49,7 @@ class MonteCarlo:
         current_agent_counts = self.get_current_agent_counts()
         for agent_type, count_list in self.agent_counts.items():
             self.agent_counts[agent_type].append(current_agent_counts[agent_type])
+
 
     def set_agent_by_id(self, id: int, new_agent: Agent):
         assert id == new_agent.id, "New agent must have the given ID as an attribute"
@@ -91,17 +106,43 @@ class MonteCarlo:
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
 
-    def iterate_generations(self, **kwargs):
+    def simulation_repeat_wrapper(self, n_repeats: int = 3) -> Callable[[Callable[Param, RetType]], Callable[Param, dict]]:
 
-        for g in range(self.generations):
+        def decorator(func: Callable) -> Callable[Param, dict]:
+
+            def wrapper(*args: Param.args, **kwargs: Param.kwargs) -> dict:
+                print("Inside wrapper")
+                maximiser_counts_arr = np.empty(shape=(n_repeats, self.generations))
+                satisfia_counts_arr = np.empty(shape=(n_repeats, self.generations))
+
+                for i in range(n_repeats):
+                    agent_counts = func(*args, **kwargs)
+
+                    maximiser_counts_arr[i] = agent_counts[MaximiserAgent]
+                    satisfia_counts_arr[i] = agent_counts[SatisfiaAgent]
+                    self.setup_agent_list_attributes()
+
+                maximiser_stats = np.percentile(maximiser_counts_arr, (25, 50, 75), axis=0)
+                satisfia_stats = np.percentile(satisfia_counts_arr, (25, 50, 75), axis=0)
+
+                return {MaximiserAgent: maximiser_stats, SatisfiaAgent: satisfia_stats}
+
+            return wrapper
+
+        return decorator
+
+
+
+    def iterate_generations(self, **kwargs: Param.kwargs) -> dict:
+
+        for g in range(self.generations - 1):
             self.shuffle_population()
             self.play_all_games()
             self.set_new_population()
 
         self.plot_agent_counts(**kwargs)
 
-        agent_counts_final = {agent_type: counts[-1] for agent_type, counts in self.agent_counts.items()}
-        return agent_counts_final
+        return self.agent_counts
 
     def plot_agent_counts(self, **kwargs):
         if kwargs['plot'] == True:
@@ -110,8 +151,6 @@ class MonteCarlo:
 
             for agent_type, agent_counts in self.agent_counts.items():
                 if 'agent_to_plot' not in kwargs.keys():
-                    # print(fig, ax)
-                    # print(agent_counts, total_agents)
                     ax.plot(np.array(agent_counts)/total_agents, label=agent_type.__name__)
                 elif kwargs['agent_to_plot'] == agent_type:
                     ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c='b', alpha=0.3)
@@ -128,14 +167,16 @@ combined_strategies = {SatisfiaAgent: SATISFIA_SET, MaximiserAgent: MAXIMISER_SE
 
 if __name__ == '__main__':
 
-    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(50)])
-    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(50)])
+    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(15)])
+    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(15)])
     agent_population = np.append(satisfias, maximisers)
-    generations = 100
+    generations = 20
     mc = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
 
+
+    mc2 = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
     fig, ax = plt.subplots()
-    agent_counts_final = mc.iterate_generations(plot=True, fig=fig, ax=ax)
-    # if agent_counts_final[MaximiserAgent] > agent_counts_final[SatisfiaAgent]:
-    #     print(True)
+    agent_counts_pcs = mc2.simulation_repeat_wrapper(n_repeats=100)(mc2.iterate_generations)(plot=True, fig=fig,ax=ax)
+    print(agent_counts_pcs)
+
     plt.show()
