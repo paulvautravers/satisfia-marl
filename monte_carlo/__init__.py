@@ -106,33 +106,28 @@ class MonteCarlo:
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
 
-    def simulation_repeat_wrapper(self, n_repeats: int = 3) -> Callable[[Callable[Param, RetType]], Callable[Param, dict]]:
-
+    def simulation_repeat_wrapper(n_repeats: int = 3, percentiles: tuple[int] = (25, 50, 75)) -> (
+            Callable)[[Callable[Param, RetType]], Callable[Param, dict]]:
         def decorator(func: Callable) -> Callable[Param, dict]:
-
-            def wrapper(*args: Param.args, **kwargs: Param.kwargs) -> dict:
-                print("Inside wrapper")
+            def wrapper(self, *args: Param.args, **kwargs: Param.kwargs) -> dict:
                 maximiser_counts_arr = np.empty(shape=(n_repeats, self.generations))
                 satisfia_counts_arr = np.empty(shape=(n_repeats, self.generations))
 
                 for i in range(n_repeats):
-                    agent_counts = func(*args, **kwargs)
+                    agent_counts = func(self, *args, **kwargs)
 
                     maximiser_counts_arr[i] = agent_counts[MaximiserAgent]
                     satisfia_counts_arr[i] = agent_counts[SatisfiaAgent]
                     self.setup_agent_list_attributes()
 
-                maximiser_stats = np.percentile(maximiser_counts_arr, (25, 50, 75), axis=0)
-                satisfia_stats = np.percentile(satisfia_counts_arr, (25, 50, 75), axis=0)
+                maximiser_stats = np.percentile(maximiser_counts_arr, percentiles, axis=0)
+                satisfia_stats = np.percentile(satisfia_counts_arr, percentiles, axis=0)
 
                 return {MaximiserAgent: maximiser_stats, SatisfiaAgent: satisfia_stats}
-
             return wrapper
-
         return decorator
 
-
-
+    @simulation_repeat_wrapper(n_repeats=10)
     def iterate_generations(self, **kwargs: Param.kwargs) -> dict:
 
         for g in range(self.generations - 1):
@@ -176,7 +171,8 @@ if __name__ == '__main__':
 
     mc2 = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
     fig, ax = plt.subplots()
-    agent_counts_pcs = mc2.simulation_repeat_wrapper(n_repeats=100)(mc2.iterate_generations)(plot=True, fig=fig,ax=ax)
+    # agent_counts_pcs = mc2.simulation_repeat_wrapper(n_repeats=100)(mc2.iterate_generations)(plot=True, fig=fig,ax=ax)
+    agent_counts_pcs = mc2.iterate_generations(plot=True, fig=fig, ax=ax)
     print(agent_counts_pcs)
 
     plt.show()
