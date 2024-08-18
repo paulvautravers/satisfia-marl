@@ -1,7 +1,10 @@
 import networkx as nx
 import numpy as np
+from matplotlib import pyplot as plt
 
-from games import Game
+from agents import SatisfiaAgent
+from games import Game, JOBST_GAME
+from monte_carlo import combined_strategies
 from network import SatisfiaMaximiserNetwork
 
 
@@ -22,17 +25,36 @@ class NetworkByCentrality(SatisfiaMaximiserNetwork):
         super().__init__(game, strategy_dict, satisfia_share,
                          generations, base_graph, draw_network_interval)
 
-    def initialize_graph(self, base_graph: nx.Graph):
-        self.graph = base_graph  # Please review ## Maybe better to provide base graph to get_avg_closeness?
-        nodes_by_closeness_centrality = self.get_avg_closeness_centrality()
+    def initialize_graph(self, base_graph: nx.Graph, agent_list):
+        graph = base_graph.copy()
+        nodes_by_closeness_centrality = nx.closeness_centrality(graph)
 
         nodes_by_closeness_centrality = {k: v for k, v in
                                          sorted(nodes_by_closeness_centrality.items(), key=lambda item: item[1],
                                                 reverse=True)}
 
-        self.agent_list = np.roll(self.agent_list, self.shift_most_central)
+        agent_list = np.roll(agent_list, self.shift_most_central)
 
         for i, node in enumerate(nodes_by_closeness_centrality.keys()):
-            self.graph.nodes[node]['data'] = self.agent_list[i]
+            graph.nodes[node]['data'] = agent_list[i]
 
-        return self.graph  ## Maybe better to provide base graph to get_avg_closeness?
+        return graph
+
+
+if __name__ == '__main__':
+    N_AGENTS = 50
+    EDGES_PER_NODE = 2
+    BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
+
+    my_graph = NetworkByCentrality(
+        JOBST_GAME,
+        combined_strategies,
+        0.4,
+        100,
+        BASE_BARABASI,
+        50,
+        0
+    )
+    fig, ax = plt.subplots()
+    my_graph.iterate_generations(1, 1, plot=True, fig=fig, ax=ax, agent_to_plot=SatisfiaAgent)
+    plt.show()

@@ -20,7 +20,7 @@ class MonteCarlo:
         self.agent_list = agent_list
         self.strategy_set = strategy_set
         self.generations = generations
-        self.agent_types = set([agent.type for agent in self.agent_list])
+        self.agent_types = set([agent.type for agent in agent_list])
         self.reward_dict = defaultdict(int)
         initial_agent_counts = self.get_current_agent_counts()
         self.agent_counts = {agent_type: [initial_agent_counts[agent_type]] for agent_type in self.agent_types}

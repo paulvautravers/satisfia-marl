@@ -23,11 +23,12 @@ class NetworkByNeighborhood(SatisfiaMaximiserNetwork):
         super().__init__(game, strategy_dict, satisfia_share,
                          generations, base_graph, draw_network_interval, learn_param_a, learn_param_b)
 
-    def initialize_graph(self, base_graph: nx.Graph):
-        n_satisfia_to_assign = int(len(base_graph) * self.satisfia_share)
+    def initialize_graph(self, base_graph: nx.Graph, agent_list_to_ignore):
+        graph = base_graph.copy()
+        n_satisfia_to_assign = int(len(graph) * self.satisfia_share)
         queue = deque()
         assigned = []
-        starting_node_idx = np.random.randint(0, len(base_graph))
+        starting_node_idx = np.random.randint(0, len(graph))
         queue.append(starting_node_idx)
 
         while n_satisfia_to_assign > 0:
@@ -36,26 +37,24 @@ class NetworkByNeighborhood(SatisfiaMaximiserNetwork):
 
             # Assign it as SatisfIA
             new_agent = SatisfiaAgent(SATISFIA_SET)
-            base_graph.nodes[current_node_idx]['data'] = new_agent
-            self.agent_list[current_node_idx] = new_agent
+            graph.nodes[current_node_idx]['data'] = new_agent
             assigned.append(current_node_idx)
             n_satisfia_to_assign -= 1
 
             # Store its neighbors in the queue
-            neighbors = list(base_graph.neighbors(current_node_idx))
+            neighbors = list(graph.neighbors(current_node_idx))
             random.shuffle(neighbors)
             for neighbor in neighbors:
                 if neighbor not in assigned:
                     queue.append(neighbor)
 
         # Assign all remaining nodes as Maximizer
-        for node_idx in range(len(base_graph)):
-            if 'data' not in base_graph.nodes[node_idx]:
+        for node_idx in range(len(graph)):
+            if 'data' not in graph.nodes[node_idx]:
                 default_agent = MaximiserAgent(MAXIMISER_SET)
-                base_graph.nodes[node_idx]['data'] = default_agent
-                self.agent_list[node_idx] = default_agent
+                graph.nodes[node_idx]['data'] = default_agent
 
-        return base_graph
+        return graph
 
 
 
@@ -76,4 +75,4 @@ if __name__ == '__main__':
         50
     )
     my_graph.draw_network(0)
-    my_graph.iterate_generations(1, 1)
+    my_graph.iterate_generations(1, 1, plot=True)
