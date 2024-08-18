@@ -38,10 +38,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                  learn_param_b: float = 0.5):
 
         self.n_agents = len(base_graph.nodes())
-        agent_list = gen_agent_population(self.n_agents, satisfia_share)
-        super().__init__(game, strategy_dict, agent_list, generations)
         self.satisfia_share = satisfia_share
-        self.graph = self.initialize_graph(base_graph.copy())
+        agent_list = gen_agent_population(self.n_agents, satisfia_share)
+        self.graph = self.initialize_graph(base_graph, agent_list)
+        super().__init__(game, strategy_dict, agent_list, generations)
         self.draw_network_interval = draw_network_interval
         self.learn_param_a = learn_param_a
         self.learn_param_b = learn_param_b
@@ -49,23 +49,28 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                                      for agent_type in self.agent_types}
 
     @property
-    def nodes(self):
-        return np.array(self.graph.nodes(data=True))
+    def agent_list(self) -> npt.NDArray[Agent]:
+        return np.array([node['data'] for i, node in self.graph.nodes(data=True)])
+
+    @agent_list.setter
+    def agent_list(self, input_to_ignore):
+        """The property overrides the MonteCarlo attribute and should not be set directly"""
+        pass
 
     def set_agent_by_id(self, id: int, new_agent: Agent):
         assert id == new_agent.id, "New agent must have the given ID as an attribute"
         for i, agent in enumerate(self.agent_list):
             if agent.id == id:
-                self.agent_list[i] = new_agent
                 self.graph.nodes[i]['data'] = new_agent
                 return
         raise ValueError(f"Can't update agent: ID {id} not found in agent list.")
 
-    def initialize_graph(self, base_graph: nx.Graph):
-        np.random.shuffle(self.agent_list)
-        for i, agent in enumerate(self.agent_list):
-            base_graph.nodes[i]['data'] = agent
-        return base_graph
+    def initialize_graph(self, base_graph: nx.Graph, agent_list: npt.NDArray[Agent]):
+        graph = base_graph.copy()
+        np.random.shuffle(agent_list)
+        for i, agent in enumerate(agent_list):
+            graph.nodes[i]['data'] = agent
+        return graph
 
     def get_random_edge(self):
         edges = np.array(self.graph.edges)
