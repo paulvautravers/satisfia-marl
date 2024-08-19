@@ -34,6 +34,7 @@ class MonteCarlo:
 
         self.agent_list = self.initial_agent_list
         self.agent_types = set([agent.type for agent in self.agent_list])
+
         self.reward_dict = defaultdict(int)
 
         initial_agent_counts = self.get_current_agent_counts()
@@ -135,25 +136,24 @@ class MonteCarlo:
             self.play_all_games()
             self.set_new_population()
 
-        self.plot_agent_counts(**kwargs)
+        if plot:
+            self.plot_agent_counts()
 
         return self.agent_counts
 
-    def plot_agent_counts(self, **kwargs):
-        if kwargs['plot'] == True:
-            fig, ax = kwargs['fig'], kwargs['ax']
-            total_agents = len(self.agent_list)
+    def plot_agent_counts(self):
+        total_agents = len(self.agent_list)
 
-            for agent_type, agent_counts in self.agent_counts.items():
-                if 'agent_to_plot' not in kwargs.keys():
-                    ax.plot(np.array(agent_counts)/total_agents, label=agent_type.__name__)
-                elif kwargs['agent_to_plot'] == agent_type:
-                    ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c='b', alpha=0.3)
+        fig, ax = plt.subplots()
+        for agent_type, agent_counts in self.agent_counts.items():
+            ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c=agent_type.color, alpha=0.3)
 
-            plt.title('Plot of agent populations over generations')
-            ax.set_xlabel('Generation')
-            ax.set_ylabel('Agent type share of population')
-
+        ax.set_title('Plot of agent populations over generations')
+        ax.set_xlabel('Generation')
+        ax.set_ylabel('Agent type share of population')
+        ax.set_ylim([0, 1])
+        ax.legend()
+        plt.show()
 
 
 # MonteCarlo globals
@@ -167,7 +167,6 @@ if __name__ == '__main__':
     agent_population = np.append(satisfias, maximisers)
     generations = 20
     mc = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
-
 
     mc2 = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
     fig, ax = plt.subplots()
