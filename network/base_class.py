@@ -126,7 +126,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         nx.draw_networkx_edges(self.graph, pos, ax=ax, alpha=0.3)
         nx.draw_networkx_labels(
             self.graph,
-            pos=pos, #{node: (coords[0], coords[1] + 0.1) for node, coords in pos.items()},
+            pos=pos,
             ax=ax,
             font_size=7,
             font_weight='bold'
@@ -152,8 +152,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         if plot:
             self.plot_agent_counts()
             # self.plot_average_centrality()
-        else:
-            return self.agent_counts
+
+        return self.agent_counts
 
     def count_internal_edges(self, nodes):
         subgraph = self.graph.subgraph(nodes)

@@ -100,8 +100,8 @@ class MonteCarlo:
 
         if plot:
             self.plot_agent_counts()
-        else:
-            return self.agent_counts
+
+        return self.agent_counts
 
     def plot_agent_counts(self):
         total_agents = len(self.agent_list)
