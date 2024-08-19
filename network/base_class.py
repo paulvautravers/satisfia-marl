@@ -1,5 +1,5 @@
 import random
-from typing import List, Type
+from typing import List, Type, Optional
 
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -118,42 +118,42 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         if neighbor_agent.type != learner_agent.type:
             self.node_social_learning(learner_agent, neighbor_agent)
 
-    def draw_network(self, generation: int):
+    def draw_network(self, generation: Optional[int] = None):
         color_map = [agent.type.color for agent in self.agent_list]
         pos = nx.spring_layout(self.graph, seed=42)
-        plt.figure(figsize=(7, 7))
-        nx.draw_networkx_nodes(self.graph, pos, node_color=color_map, node_size=30)
-        nx.draw_networkx_edges(self.graph, pos)
+        fig, ax = plt.subplots(figsize=(6, 3))
+        nx.draw_networkx_nodes(self.graph, pos, ax=ax, node_color=color_map, node_size=100, alpha=0.7)
+        nx.draw_networkx_edges(self.graph, pos, ax=ax, alpha=0.3)
         nx.draw_networkx_labels(
             self.graph,
-            pos={node: (coords[0], coords[1] + 0.05) for node, coords in pos.items()}
+            pos=pos, #{node: (coords[0], coords[1] + 0.1) for node, coords in pos.items()},
+            ax=ax,
+            font_size=7,
+            font_weight='bold'
         )
-        plt.title(f"Network (generation {generation})")
-        plt.legend(handles=[Patch(facecolor=agent_type.color, edgecolor='black', label=agent_type.__name__)
+        ax.set_title(f"Network (generation {generation})")
+        ax.legend(handles=[Patch(facecolor=agent_type.color, edgecolor='black', label=agent_type.__name__)
                             for agent_type in self.agent_types])
         plt.show()
 
-    def iterate_generations(self, p_play_game: float, p_social_learning: float, **kwargs):
+    def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
         for i_gen in range(self.generations):
             if random.random() < p_play_game:
                 self.play_game_process()
             if random.random() < p_social_learning:
                 self.social_learning_process()
-            # Todo: rewiring
 
             self.store_agent_counts()
             self.store_avg_closeness_centrality()
-            if kwargs['plot'] and i_gen % self.draw_network_interval == 0:
-                # self.draw_network(i_gen)
+            if plot and i_gen % self.draw_network_interval == 0:
+                self.draw_network(i_gen)
                 pass
 
-        logger.debug(kwargs)
-        if kwargs['plot']:
-            if 'fig' in kwargs:
-                super().plot_agent_counts(**kwargs)
-            else:
-                self.plot_agent_counts()
+        if plot:
+            self.plot_agent_counts()
             # self.plot_average_centrality()
+        else:
+            return self.agent_counts
 
     def count_internal_edges(self, nodes):
         subgraph = self.graph.subgraph(nodes)
@@ -172,7 +172,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             closeness_centralities = [nx.closeness_centrality(self.graph, u=node_key)
                                       for node_key, node_data in self.graph.nodes(data=True)
                                       if node_data['data'].type == agent_type]
-            return np.array(closeness_centralities).mean()
+            if len(closeness_centralities) == 0:
+                return np.nan
+            else:
+                return np.array(closeness_centralities).mean()
 
     def get_avg_degree(self, agent_types=None):
         agent_types = self.agent_types if agent_types is None else agent_types
@@ -185,19 +188,10 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         for agent_type in self.agent_types:
             self.closeness_centrality[agent_type].append(self.get_avg_closeness_centrality(agent_type))
 
-    def plot_agent_counts(self):
-        for agent_type, counts in self.agent_counts.items():
-            plt.plot(np.array(counts) / self.n_agents, label=agent_type.__name__)
-        plt.title('Plot of agent populations over generations')
-        plt.xlabel('Generations')
-        plt.ylabel('Population')
-        plt.ylim([0, 1])
-        plt.legend()
-        plt.show()
 
     def plot_average_centrality(self):
         for agent_type in self.agent_types:
-            plt.plot(self.closeness_centrality[agent_type], label=agent_type.__name__)
+            plt.plot(self.closeness_centrality[agent_type], label=agent_type.__name__, c=agent_type.color, alpha=0.5)
         plt.title('Plot of average closeness centrality of nodes by agent type')
         plt.xlabel('Generations')
         plt.ylabel('Average closeness centrality')
@@ -217,11 +211,11 @@ if __name__ == '__main__':
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        0.65,
-        60,
+        0.2,
+        100,
         BASE_BARABASI,
         50
     )
-    my_graph.iterate_generations(1, 0.5, plot=True)
-    my_graph.get_avg_closeness_centrality(MaximiserAgent)
+    my_graph.iterate_generations(1, 1, plot=True)
+    my_graph.plot_average_centrality()
 

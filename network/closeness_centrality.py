@@ -42,7 +42,7 @@ class NetworkByCentrality(SatisfiaMaximiserNetwork):
 
 
 if __name__ == '__main__':
-    N_AGENTS = 50
+    N_AGENTS = 30
     EDGES_PER_NODE = 2
     BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
 
@@ -50,11 +50,9 @@ if __name__ == '__main__':
         JOBST_GAME,
         combined_strategies,
         0.4,
-        100,
+        400,
         BASE_BARABASI,
-        50,
-        0
+        200,
+        9
     )
-    fig, ax = plt.subplots()
-    my_graph.iterate_generations(1, 1, plot=True, fig=fig, ax=ax, agent_to_plot=SatisfiaAgent)
-    plt.show()
+    my_graph.iterate_generations(1, 0.5, plot=True)
