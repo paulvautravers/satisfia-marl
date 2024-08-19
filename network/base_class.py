@@ -21,7 +21,7 @@ def gen_agent_population(n_agents: int, satisfia_share: float) -> npt.NDArray[Ag
     satisfias = np.array([SatisfiaAgent(SATISFIA_SET) for _ in range(satisfia_count)])
     maximisers = np.array([MaximiserAgent(MAXIMISER_SET) for _ in range(maximiser_count)])
     agent_population = np.append(satisfias, maximisers)
-    # np.random.shuffle(agent_population)
+
     return agent_population
 
 
@@ -40,7 +40,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         self.n_agents = len(base_graph.nodes())
         self.satisfia_share = satisfia_share
         agent_list = gen_agent_population(self.n_agents, satisfia_share)
-        self.graph = self.initialize_graph(base_graph, agent_list)
+        self.initial_graph = self.initialize_graph(base_graph, agent_list)
+        self.graph = self.initial_graph
         super().__init__(game, strategy_dict, agent_list, generations)
         self.draw_network_interval = draw_network_interval
         self.learn_param_a = learn_param_a
@@ -72,6 +73,11 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             graph.nodes[i]['data'] = agent
         return graph
 
+    def setup_agent_list_attributes(self):
+        self.graph = self.initial_graph
+        # super().setup_agent_list_attributes()
+
+
     def get_random_edge(self):
         edges = np.array(self.graph.edges)
         edge_idx = np.random.randint(len(edges))
@@ -96,7 +102,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
             logger.debug("--------------------------------------------------------------------")
             logger.debug(f"Switch between: Learner {learner_agent} with {learner_agent.payoff}"
-                  f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
+                         f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
             learner_agent = learner_agent.transmute(neighbor_agent)
             logger.debug(f"new learner: {learner_agent}, new neighbor: {neighbor_agent}")
 
@@ -137,7 +143,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         plt.show()
 
     def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
-        for i_gen in range(self.generations):
+        for i_gen in range(self.generations - 1):
             if random.random() < p_play_game:
                 self.play_game_process()
             if random.random() < p_social_learning:
@@ -151,9 +157,42 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
         if plot:
             self.plot_agent_counts()
-            # self.plot_average_centrality()
 
         return self.agent_counts
+
+    def get_iteration_repeats(self, p_play_game: float, p_social_learning: float,
+                              n_repeats: int, plot=False):
+
+        maximiser_counts_arr = np.empty(shape=(n_repeats, self.generations))
+        satisfia_counts_arr = np.empty(shape=(n_repeats, self.generations))
+
+        for r in range(n_repeats):
+
+            print(r)
+            agent_counts = self.iterate_generations(p_play_game, p_social_learning, plot=False)
+
+            print(agent_counts)
+            maximiser_counts_arr[r] = agent_counts[MaximiserAgent]
+            satisfia_counts_arr[r] = agent_counts[SatisfiaAgent]
+            self.setup_agent_list_attributes()
+
+        # maximiser_stats = np.percentile(maximiser_counts_arr, percentiles, axis=0)
+        # satisfia_stats = np.percentile(satisfia_counts_arr, percentiles, axis=0)
+
+        return {MaximiserAgent: maximiser_counts_arr, SatisfiaAgent: satisfia_counts_arr}
+
+    def plot_agent_counts_with_errors(self, count_repeat_dict: dict):
+        fig, ax = plt.subplots()
+
+        ax.boxplot(count_repeat_dict[MaximiserAgent]/self.n_agents, color='red')
+        ax.boxplot(count_repeat_dict[SatisfiaAgent]/self.n_agents, color='blue')
+
+        ax.set_title('Plot of agent populations over generations')
+        ax.set_xlabel('Generation')
+        ax.set_ylabel('Agent type share of population')
+        ax.set_ylim([0, 1])
+        ax.legend()
+        plt.show()
 
     def count_internal_edges(self, nodes):
         subgraph = self.graph.subgraph(nodes)
@@ -201,7 +240,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
 if __name__ == '__main__':
 
-    N_AGENTS = 30
+    N_AGENTS = 10
     EDGES_PER_NODE = 2
     BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
 
@@ -211,11 +250,14 @@ if __name__ == '__main__':
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        0.2,
-        100,
+        0.5,
+        20,
         BASE_BARABASI,
         50
     )
-    my_graph.iterate_generations(1, 1, plot=True)
-    my_graph.plot_average_centrality()
+    # my_graph.iterate_generations(1, 1, plot=True)
+    # my_graph.plot_average_centrality()
+
+    repeat_data = my_graph.get_iteration_repeats(1,1,n_repeats=10)
+    print(repeat_data)
 

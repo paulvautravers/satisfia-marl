@@ -32,8 +32,13 @@ class MonteCarlo:
 
     def setup_agent_list_attributes(self):
 
+        print(self.agent_list)
         self.agent_list = self.initial_agent_list
+        print(self.agent_list)
+
+        print(self.agent_types)
         self.agent_types = set([agent.type for agent in self.agent_list])
+        print(self.agent_types)
 
         self.reward_dict = defaultdict(int)
 
@@ -107,26 +112,26 @@ class MonteCarlo:
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
 
-    def simulation_repeat_wrapper(n_repeats: int = 3, percentiles: tuple[int] = (25, 50, 75)) -> (
-            Callable)[[Callable[Param, RetType]], Callable[Param, dict]]:
-        def decorator(func: Callable) -> Callable[Param, dict]:
-            def wrapper(self, *args: Param.args, **kwargs: Param.kwargs) -> dict:
-                maximiser_counts_arr = np.empty(shape=(n_repeats, self.generations))
-                satisfia_counts_arr = np.empty(shape=(n_repeats, self.generations))
-
-                for i in range(n_repeats):
-                    agent_counts = func(self, *args, **kwargs)
-
-                    maximiser_counts_arr[i] = agent_counts[MaximiserAgent]
-                    satisfia_counts_arr[i] = agent_counts[SatisfiaAgent]
-                    self.setup_agent_list_attributes()
-
-                maximiser_stats = np.percentile(maximiser_counts_arr, percentiles, axis=0)
-                satisfia_stats = np.percentile(satisfia_counts_arr, percentiles, axis=0)
-
-                return {MaximiserAgent: maximiser_stats, SatisfiaAgent: satisfia_stats}
-            return wrapper
-        return decorator
+    # def simulation_repeat_wrapper(n_repeats: int = 3, percentiles: tuple[int] = (25, 50, 75)) -> (
+    #         Callable)[[Callable[Param, RetType]], Callable[Param, dict]]:
+    #     def decorator(func: Callable) -> Callable[Param, dict]:
+    #         def wrapper(self, *args: Param.args, **kwargs: Param.kwargs) -> dict:
+    #             maximiser_counts_arr = np.empty(shape=(n_repeats, self.generations))
+    #             satisfia_counts_arr = np.empty(shape=(n_repeats, self.generations))
+    #
+    #             for i in range(n_repeats):
+    #                 agent_counts = func(self, *args, **kwargs)
+    #
+    #                 maximiser_counts_arr[i] = agent_counts[MaximiserAgent]
+    #                 satisfia_counts_arr[i] = agent_counts[SatisfiaAgent]
+    #                 self.setup_agent_list_attributes()
+    #
+    #             maximiser_stats = np.percentile(maximiser_counts_arr, percentiles, axis=0)
+    #             satisfia_stats = np.percentile(satisfia_counts_arr, percentiles, axis=0)
+    #
+    #             return {MaximiserAgent: maximiser_stats, SatisfiaAgent: satisfia_stats}
+    #         return wrapper
+    #     return decorator
 
     def iterate_generations(self, plot=False):
 
