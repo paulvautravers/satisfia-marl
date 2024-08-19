@@ -128,8 +128,7 @@ class MonteCarlo:
             return wrapper
         return decorator
 
-    @simulation_repeat_wrapper(n_repeats=10)
-    def iterate_generations(self, **kwargs: Param.kwargs) -> dict:
+    def iterate_generations(self, plot=False):
 
         for g in range(self.generations - 1):
             self.shuffle_population()
