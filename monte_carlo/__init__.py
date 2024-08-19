@@ -91,35 +91,31 @@ class MonteCarlo:
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
 
-    def iterate_generations(self, **kwargs):
+    def iterate_generations(self, plot=False):
 
         for g in range(self.generations):
             self.shuffle_population()
             self.play_all_games()
             self.set_new_population()
 
-        self.plot_agent_counts(**kwargs)
+        if plot:
+            self.plot_agent_counts()
 
-        agent_counts_final = {agent_type: counts[-1] for agent_type, counts in self.agent_counts.items()}
-        return agent_counts_final
+        return self.agent_counts
 
-    def plot_agent_counts(self, **kwargs):
-        if kwargs['plot'] == True:
-            fig, ax = kwargs['fig'], kwargs['ax']
-            total_agents = len(self.agent_list)
+    def plot_agent_counts(self):
+        total_agents = len(self.agent_list)
 
-            for agent_type, agent_counts in self.agent_counts.items():
-                if 'agent_to_plot' not in kwargs.keys():
-                    # print(fig, ax)
-                    # print(agent_counts, total_agents)
-                    ax.plot(np.array(agent_counts)/total_agents, label=agent_type.__name__)
-                elif kwargs['agent_to_plot'] == agent_type:
-                    ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c='b', alpha=0.3)
+        fig, ax = plt.subplots()
+        for agent_type, agent_counts in self.agent_counts.items():
+            ax.plot(np.array(agent_counts) / total_agents, label=agent_type.__name__, c=agent_type.color, alpha=0.3)
 
-            plt.title('Plot of agent populations over generations')
-            ax.set_xlabel('Generation')
-            ax.set_ylabel('Agent type share of population')
-
+        ax.set_title('Plot of agent populations over generations')
+        ax.set_xlabel('Generation')
+        ax.set_ylabel('Agent type share of population')
+        ax.set_ylim([0, 1])
+        ax.legend()
+        plt.show()
 
 
 # MonteCarlo globals
@@ -134,8 +130,7 @@ if __name__ == '__main__':
     generations = 100
     mc = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
 
-    fig, ax = plt.subplots()
-    agent_counts_final = mc.iterate_generations(plot=True, fig=fig, ax=ax)
+    agent_counts_final = mc.iterate_generations(plot=True)
     # if agent_counts_final[MaximiserAgent] > agent_counts_final[SatisfiaAgent]:
     #     print(True)
     plt.show()
