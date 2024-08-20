@@ -2,6 +2,7 @@ import random
 from typing import List, Type, Optional
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
@@ -146,7 +147,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         plt.show()
 
     def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
-        self.reset()
+
         for i_gen in range(self.generations - 1):
             if random.random() < p_play_game:
                 self.play_game_process()
@@ -173,20 +174,18 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
         for r in trange(n_repeats):
 
+            self.reset()
             agent_counts = self.iterate_generations(p_play_game, p_social_learning, plot=False)
-
             maximiser_counts_arr[r] = agent_counts[MaximiserAgent]
             satisfia_counts_arr[r] = agent_counts[SatisfiaAgent]
 
         return {MaximiserAgent: maximiser_counts_arr, SatisfiaAgent: satisfia_counts_arr}
 
-    def plot_agent_counts_with_errors(self, count_repeat_dict: dict):
+    def plot_agent_count_percentiles(self, count_repeat_dict: dict):
         fig, ax = plt.subplots()
-
         for agent_type in self.agent_types:
-            median = np.median(count_repeat_dict[agent_type]/self.n_agents, axis=0)
-            q1 = np.percentile(count_repeat_dict[agent_type]/self.n_agents, 25, axis=0)
-            q3 = np.percentile(count_repeat_dict[agent_type]/self.n_agents, 75, axis=0)
+
+            q1, median, q3 = np.percentile(count_repeat_dict[agent_type]/self.n_agents, (25, 50, 75), axis=0)
             ax.plot(median, label=agent_type.__name__, c=agent_type.color)
             ax.fill_between(range(self.generations), q1, q3, alpha=0.3, color=agent_type.color)
 
@@ -230,7 +229,6 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         for agent_type in self.agent_types:
             self.closeness_centrality[agent_type].append(self.get_avg_closeness_centrality(agent_type))
 
-
     def plot_average_centrality(self):
         for agent_type in self.agent_types:
             plt.plot(self.closeness_centrality[agent_type], label=agent_type.__name__, c=agent_type.color, alpha=0.5)
@@ -243,7 +241,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
 if __name__ == '__main__':
 
-    N_AGENTS = 10
+    N_AGENTS = 20
     EDGES_PER_NODE = 2
     BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
 
@@ -254,12 +252,13 @@ if __name__ == '__main__':
         JOBST_GAME,
         combined_strategies,
         0.5,
-        20,
+        200,
         BASE_BARABASI,
         50
     )
-    my_graph.iterate_generations(1, 1, plot=True)
-    my_graph.plot_average_centrality()
+    # my_graph.iterate_generations(1, 1, plot=True)
+    # my_graph.plot_average_centrality()
+    # my_graph.reset()
 
     repeat_data = my_graph.get_iteration_repeats(1,1, n_repeats=10)
-    my_graph.plot_agent_counts_with_errors(repeat_data)
+    my_graph.plot_agent_count_percentiles(repeat_data)
