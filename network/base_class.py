@@ -2,11 +2,14 @@ import random
 from typing import List, Type, Optional
 
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import networkx as nx
 import numpy as np
 import numpy.typing as npt
 from matplotlib.patches import Patch
 import logging
+
+from tqdm import trange
 
 from agents import SatisfiaAgent, MaximiserAgent, SATISFIA_SET, MAXIMISER_SET, Agent
 from games import Game, JOBST_GAME
@@ -21,7 +24,7 @@ def gen_agent_population(n_agents: int, satisfia_share: float) -> npt.NDArray[Ag
     satisfias = np.array([SatisfiaAgent(SATISFIA_SET) for _ in range(satisfia_count)])
     maximisers = np.array([MaximiserAgent(MAXIMISER_SET) for _ in range(maximiser_count)])
     agent_population = np.append(satisfias, maximisers)
-    # np.random.shuffle(agent_population)
+
     return agent_population
 
 
@@ -39,12 +42,14 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
         self.n_agents = len(base_graph.nodes())
         self.satisfia_share = satisfia_share
-        agent_list = gen_agent_population(self.n_agents, satisfia_share)
-        self.graph = self.initialize_graph(base_graph, agent_list)
-        super().__init__(game, strategy_dict, agent_list, generations)
+        self.base_graph = base_graph
         self.draw_network_interval = draw_network_interval
         self.learn_param_a = learn_param_a
         self.learn_param_b = learn_param_b
+
+        agent_list = gen_agent_population(self.n_agents, satisfia_share)
+        self.graph = self._initialize_graph(base_graph, agent_list)
+        super().__init__(game, strategy_dict, agent_list, generations)
         self.closeness_centrality = {agent_type: [self.get_avg_closeness_centrality(agent_type)]
                                      for agent_type in self.agent_types}
 
@@ -65,7 +70,12 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                 return
         raise ValueError(f"Can't update agent: ID {id} not found in agent list.")
 
-    def initialize_graph(self, base_graph: nx.Graph, agent_list: npt.NDArray[Agent]):
+    def reset(self):
+        agent_list = gen_agent_population(self.n_agents, self.satisfia_share)
+        self.graph = self._initialize_graph(self.base_graph, agent_list)
+        self.setup_agent_list_attributes(agent_list)
+
+    def _initialize_graph(self, base_graph: nx.Graph, agent_list: npt.NDArray[Agent]):
         graph = base_graph.copy()
         np.random.shuffle(agent_list)
         for i, agent in enumerate(agent_list):
@@ -96,7 +106,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
             logger.debug("--------------------------------------------------------------------")
             logger.debug(f"Switch between: Learner {learner_agent} with {learner_agent.payoff}"
-                  f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
+                         f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
             learner_agent = learner_agent.transmute(neighbor_agent)
             logger.debug(f"new learner: {learner_agent}, new neighbor: {neighbor_agent}")
 
@@ -137,7 +147,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         plt.show()
 
     def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
-        for i_gen in range(self.generations):
+
+        for i_gen in range(self.generations - 1):
             if random.random() < p_play_game:
                 self.play_game_process()
             if random.random() < p_social_learning:
@@ -150,10 +161,40 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                 pass
 
         if plot:
+            self.draw_network(i_gen)
             self.plot_agent_counts()
-            # self.plot_average_centrality()
 
         return self.agent_counts
+
+    def get_iteration_repeats(self, p_play_game: float, p_social_learning: float,
+                              n_repeats: int):
+
+        maximiser_counts_arr = np.empty(shape=(n_repeats, self.generations))
+        satisfia_counts_arr = np.empty(shape=(n_repeats, self.generations))
+
+        for r in trange(n_repeats):
+
+            self.reset()
+            agent_counts = self.iterate_generations(p_play_game, p_social_learning, plot=False)
+            maximiser_counts_arr[r] = agent_counts[MaximiserAgent]
+            satisfia_counts_arr[r] = agent_counts[SatisfiaAgent]
+
+        return {MaximiserAgent: maximiser_counts_arr, SatisfiaAgent: satisfia_counts_arr}
+
+    def plot_agent_count_percentiles(self, count_repeat_dict: dict):
+        fig, ax = plt.subplots()
+        for agent_type in self.agent_types:
+
+            q1, median, q3 = np.percentile(count_repeat_dict[agent_type]/self.n_agents, (25, 50, 75), axis=0)
+            ax.plot(median, label=agent_type.__name__, c=agent_type.color)
+            ax.fill_between(range(self.generations), q1, q3, alpha=0.3, color=agent_type.color)
+
+        ax.set_title('Plot of agent populations over generations')
+        ax.set_xlabel('Generation')
+        ax.set_ylabel('Agent type share of population')
+        ax.set_ylim([0, 1])
+        ax.legend()
+        plt.show()
 
     def count_internal_edges(self, nodes):
         subgraph = self.graph.subgraph(nodes)
@@ -188,7 +229,6 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         for agent_type in self.agent_types:
             self.closeness_centrality[agent_type].append(self.get_avg_closeness_centrality(agent_type))
 
-
     def plot_average_centrality(self):
         for agent_type in self.agent_types:
             plt.plot(self.closeness_centrality[agent_type], label=agent_type.__name__, c=agent_type.color, alpha=0.5)
@@ -201,7 +241,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
 if __name__ == '__main__':
 
-    N_AGENTS = 30
+    N_AGENTS = 20
     EDGES_PER_NODE = 2
     BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
 
@@ -211,11 +251,14 @@ if __name__ == '__main__':
     my_graph = SatisfiaMaximiserNetwork(
         JOBST_GAME,
         combined_strategies,
-        0.2,
-        100,
+        0.5,
+        200,
         BASE_BARABASI,
         50
     )
-    my_graph.iterate_generations(1, 1, plot=True)
-    my_graph.plot_average_centrality()
+    # my_graph.iterate_generations(1, 1, plot=True)
+    # my_graph.plot_average_centrality()
+    # my_graph.reset()
 
+    repeat_data = my_graph.get_iteration_repeats(1,1, n_repeats=10)
+    my_graph.plot_agent_count_percentiles(repeat_data)

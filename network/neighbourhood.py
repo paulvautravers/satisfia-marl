@@ -23,7 +23,7 @@ class NetworkByNeighborhood(SatisfiaMaximiserNetwork):
         super().__init__(game, strategy_dict, satisfia_share,
                          generations, base_graph, draw_network_interval, learn_param_a, learn_param_b)
 
-    def initialize_graph(self, base_graph: nx.Graph, agent_list_to_ignore):
+    def _initialize_graph(self, base_graph: nx.Graph, agent_list_to_ignore):
         graph = base_graph.copy()
         n_satisfia_to_assign = int(len(graph) * self.satisfia_share)
         queue = deque()

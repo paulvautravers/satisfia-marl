@@ -25,7 +25,7 @@ class NetworkByCentrality(SatisfiaMaximiserNetwork):
         super().__init__(game, strategy_dict, satisfia_share,
                          generations, base_graph, draw_network_interval)
 
-    def initialize_graph(self, base_graph: nx.Graph, agent_list):
+    def _initialize_graph(self, base_graph: nx.Graph, agent_list):
         graph = base_graph.copy()
         nodes_by_closeness_centrality = nx.closeness_centrality(graph)
 

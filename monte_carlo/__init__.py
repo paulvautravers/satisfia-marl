@@ -1,5 +1,10 @@
 import random
 from collections import defaultdict
+from typing import Callable, Concatenate, TypeVar, ParamSpec
+
+Param = ParamSpec("Param")
+RetType = TypeVar("RetType")
+
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,15 +18,23 @@ from games import Game, JOBST_GAME
 class MonteCarlo:
 
     def __init__(self, game: Game, strategy_set: dict,
-                 agent_list: npt.NDArray[agents.Agent] = np.array([]),
+                 agent_list: npt.NDArray[agents.Agent],
                  generations: int = 100):
 
+        #These attributes remain unchanged
         self.game = game
-        self.agent_list = agent_list
         self.strategy_set = strategy_set
         self.generations = generations
+
+        self.agent_list, self.agent_types, self.reward_dict, self.agent_counts = None, None, None, None
+        self.setup_agent_list_attributes(agent_list)
+
+    def setup_agent_list_attributes(self, agent_list):
+
+        self.agent_list = agent_list
         self.agent_types = set([agent.type for agent in agent_list])
         self.reward_dict = defaultdict(int)
+
         initial_agent_counts = self.get_current_agent_counts()
         self.agent_counts = {agent_type: [initial_agent_counts[agent_type]] for agent_type in self.agent_types}
 
@@ -35,6 +48,7 @@ class MonteCarlo:
         current_agent_counts = self.get_current_agent_counts()
         for agent_type, count_list in self.agent_counts.items():
             self.agent_counts[agent_type].append(current_agent_counts[agent_type])
+
 
     def set_agent_by_id(self, id: int, new_agent: Agent):
         assert id == new_agent.id, "New agent must have the given ID as an attribute"
@@ -91,9 +105,10 @@ class MonteCarlo:
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
 
+
     def iterate_generations(self, plot=False):
 
-        for g in range(self.generations):
+        for g in range(self.generations - 1):
             self.shuffle_population()
             self.play_all_games()
             self.set_new_population()
@@ -124,13 +139,15 @@ combined_strategies = {SatisfiaAgent: SATISFIA_SET, MaximiserAgent: MAXIMISER_SE
 
 if __name__ == '__main__':
 
-    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(50)])
-    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(50)])
+    satisfias = np.array([agents.SatisfiaAgent(SATISFIA_SET) for _ in range(15)])
+    maximisers = np.array([agents.MaximiserAgent(MAXIMISER_SET) for _ in range(15)])
     agent_population = np.append(satisfias, maximisers)
-    generations = 100
+    generations = 20
     mc = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
 
-    agent_counts_final = mc.iterate_generations(plot=True)
-    # if agent_counts_final[MaximiserAgent] > agent_counts_final[SatisfiaAgent]:
-    #     print(True)
+    mc2 = MonteCarlo(JOBST_GAME, combined_strategies, agent_population, generations)
+    fig, ax = plt.subplots()
+    agent_counts_pcs = mc2.iterate_generations(plot=True)
+    print(agent_counts_pcs)
+
     plt.show()
