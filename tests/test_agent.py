@@ -9,21 +9,17 @@ class TesterAgent(Agent):
 
     @property
     @classmethod
-    def color(cls):
-        return "blue"
+    def color(cls): return "blue"
 
-    def get_action(self, opponent: Agent) -> int:
-        return 0  # basic implementation for testing
+    def get_action(self, opponent: Agent) -> int: return 0  # basic implementation for testing
 
 
 class TesterAgent2(Agent):
     @property
     @classmethod
-    def color(cls):
-        return "red"
+    def color(cls): return "red"
 
-    def get_action(self, opponent: Agent) -> int:
-        return 1  # basic implementation for testing
+    def get_action(self, opponent: Agent) -> int: return 1
 
 class AgentTests(unittest.TestCase):
 
@@ -77,6 +73,25 @@ class AgentTests(unittest.TestCase):
         with self.subTest(msg="Agent type converted"):
             self.assertEqual(agent_copy.__class__, TesterAgent2)
 
+    def test_correct_avg_payoff(self):
+        agent = TesterAgent()
+        agent.payoff = 5
+        gammas = [0, 0.5, 1]
+        new_payoffs = [-1, 0, 1]
+        for p in new_payoffs:
+            for g in gammas:
+                with self.subTest(f"Checking avg payoff: new payoff {p}, gamma {g}"):
+                    agent.gamma = g
+                    new_payoff = agent.get_new_avg_payoff(p)
+                    expected_payoff = agent.gamma*agent.payoff + p
+                    self.assertEqual(new_payoff,expected_payoff)
+
+    def test_get_action_implemented(self):
+        agent = TesterAgent()
+        opponent = TesterAgent2()
+        action = agent.get_action(opponent)
+        self.assertEqual(action,0)
+
     def test_type_property(self):
         agent = TesterAgent()
         self.assertEqual(agent.type, TesterAgent)
@@ -84,4 +99,12 @@ class AgentTests(unittest.TestCase):
     def test_label_property(self):
         agent = TesterAgent()
         self.assertEqual(agent.label,"TesterAgent")
+
+    def test_color_property(self):
+        agent = TesterAgent()
+        self.assertEqual(agent.color,"blue")
+
+    def test_agent_is_abstract(self):
+        with self.assertRaises(TypeError):
+            agent = Agent()
 
