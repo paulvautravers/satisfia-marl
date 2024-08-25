@@ -5,6 +5,10 @@ import numpy as np
 
 class TesterAgent(Agent):
 
+    def __init__(self, strategy_set: dict):
+        super().__init__()
+        self.strategy_set = strategy_set
+
     @property
     @classmethod
     def color(cls): return "blue"
@@ -13,6 +17,11 @@ class TesterAgent(Agent):
 
 
 class TesterAgent2(Agent):
+
+    def __init__(self, strategy_set: dict):
+        super().__init__()
+        self.strategy_set = strategy_set
+
     @property
     @classmethod
     def color(cls): return "red"
