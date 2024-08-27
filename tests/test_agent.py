@@ -7,17 +7,14 @@ from agents import Agent
 
 class TesterAgent(Agent):
 
-    @property
-    @classmethod
-    def color(cls): return "blue"
+    color = "blue"
 
     def get_action(self, opponent: Agent) -> int: return 0  # basic implementation for testing
 
 
 class TesterAgent2(Agent):
-    @property
-    @classmethod
-    def color(cls): return "red"
+
+    color = "red"
 
     def get_action(self, opponent: Agent) -> int: return 1
 

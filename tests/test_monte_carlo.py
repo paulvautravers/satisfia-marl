@@ -1,9 +1,10 @@
 import unittest
+from collections import defaultdict
+
 from mock import Mock
-import numpy as np
+
 from monte_carlo import MonteCarlo
 from utils import *
-from collections import defaultdict
 
 
 class MonteCarloTests(unittest.TestCase):
