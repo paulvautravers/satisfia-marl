@@ -38,7 +38,7 @@ class TestGenAgentPopulation(unittest.TestCase):
 
 class TestSatisfiaMaximiserNetwork(unittest.TestCase):
 
-    N_AGENTS = 10
+    N_AGENTS = 20
     N_GENERATIONS = 50
     SATISFIA_SHARE = 0.5
 
@@ -63,6 +63,7 @@ class TestSatisfiaMaximiserNetwork(unittest.TestCase):
     def test_reset(self):
         iterations = 1000
         agent_list_equal_count = 0
+        n_agents = len(self.network.agent_list)
         for i in range(iterations):
             initial_agents = list(self.network.agent_list)
             self.network.reset()
@@ -92,7 +93,7 @@ class TestSatisfiaMaximiserNetwork(unittest.TestCase):
         new_agent.id = id
 
         with self.assertRaises(ValueError):
-            self.network.set_agent_by_id(id, MaximiserAgent(MAXIMISER_SET))
+            self.network.set_agent_by_id(id, new_agent)
 
     def test_node_social_learning(self):
         #Todo ... This test needs to be developed; potentially with mock objects at first?
