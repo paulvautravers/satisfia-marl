@@ -1,0 +1,5 @@
+numpy~=2.0.0
+matplotlib~=3.9.0
+mock~=5.1.0
+networkx~=3.3
+tqdm~=4.66.5
