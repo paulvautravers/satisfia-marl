@@ -84,6 +84,7 @@ class MaximiserAgent(Agent):
         action = np.random.choice(range(len(strategy)), p=strategy)
         return action
 
+
 # Agent related globals
 MAXIMISER_SET = {SatisfiaAgent: [0, 1, 0, 0, 0, 0], MaximiserAgent: [0, 0, 0, 0, 0, 1]}
 SATISFIA_SET = {SatisfiaAgent: [0, 0, 0, 1, 0, 0], MaximiserAgent: [0, 1, 0, 0, 0, 0]}
@@ -97,11 +98,6 @@ if __name__ == '__main__':
     print(satisfia)
     print(maximiser)
 
-    class_type = type(maximiser)
-    new_agent = Agent() #class_type.__new__(class_type)
-    new_agent.__class__ = class_type
-
-    print(new_agent)
 
     # print(SATISFIA_SET)
 
