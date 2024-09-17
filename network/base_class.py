@@ -1,5 +1,5 @@
 import random
-from typing import List, Type, Optional
+from typing import List, Type, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -37,8 +37,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
                  generations: int,
                  base_graph: nx.Graph,
                  draw_network_interval: int,
-                 learn_param_a: float = 0.5,
-                 learn_param_b: float = 0.5):
+                 learn_param_a: float = 1.0,
+                 learn_param_b: float = 0.1):
 
         self.n_agents = len(base_graph.nodes())
         self.satisfia_share = satisfia_share
@@ -97,36 +97,58 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
         neighbor = random.choice([n for n in neighbors])
         return neighbor
 
-    def node_social_learning(self, learner_agent: Agent, neighbor_agent: Agent) -> None:
+    def node_social_learning(self, node_idx: int) -> Optional[Tuple[int, Agent]]:
+        def weighted_signed_average_payoff(learner: Agent, neighbour_list: List[Agent]):
+            total = learner.payoff
+            for neighbour in neighbour_list:
+                if isinstance(neighbour, learner.type):
+                    total += neighbour.payoff
+                else:
+                    total -= neighbour.payoff
+            return total / (len(neighbour_list) + 1)
 
-        p_switch = 1/(1+np.exp(self.learn_param_a + self.learn_param_b*(learner_agent.payoff - neighbor_agent.payoff)))
+        learner_agent = self.graph.nodes[node_idx]['data']
+        neighbour_agents = [self.graph.nodes[neigh_idx]['data'] for neigh_idx in self.graph.neighbors(node_idx)]
+
+        p_switch = 1/(1+np.exp(self.learn_param_a +
+                               self.learn_param_b * weighted_signed_average_payoff(learner_agent, neighbour_agents)))
         r = np.random.uniform()
 
         if r < p_switch:
+            # Find an instance of a neighbour of a different type
+            different_neighbour = None
+            for neighbour in neighbour_agents:
+                if neighbour.type != learner_agent.type:
+                    different_neighbour = neighbour
+                    break
+            # Transmute if a different neighbour was found and return transmutation
+            if different_neighbour is not None:
+                new_agent = learner_agent.transmute(different_neighbour)
+                return new_agent.id, new_agent
+        return None
 
-            logger.debug("--------------------------------------------------------------------")
-            logger.debug(f"Switch between: Learner {learner_agent} with {learner_agent.payoff}"
-                         f" and Neighbor {neighbor_agent} with {neighbor_agent.payoff} payoff")
-            learner_agent = learner_agent.transmute(neighbor_agent)
-            logger.debug(f"new learner: {learner_agent}, new neighbor: {neighbor_agent}")
 
-            self.set_agent_by_id(learner_agent.id, learner_agent)
+    def play_game_process(self, p_play_game: float):
+        """All pairs of connected agents have a chance to play a game together"""
+        for node1, node2 in self.graph.edges:
+            if random.random() < p_play_game:
+                agent1 = self.graph.nodes[node1]['data']
+                agent2 = self.graph.nodes[node2]['data']
+                self.play_game(agent1, agent2)
 
-    def play_game_process(self):
-        node1, node2 = self.get_random_edge()
-        agent1 = self.graph.nodes[node1]['data']
-        agent2 = self.graph.nodes[node2]['data']
-        self.play_game(agent1, agent2)
+    def social_learning_process(self, p_social_learning: float):
+        """All agents have a chance to learn from their neighbours"""
+        transmutations = []
+        for node_id in self.graph.nodes:
+            if random.random() < p_social_learning:
+                transmutation: Optional[Tuple[int, Agent]] = self.node_social_learning(node_id)
+                if transmutation is not None:
+                    transmutations.append(transmutation)
 
-    def social_learning_process(self):
-        learner_node = self.get_random_node()
-        neighbor_node = self.get_random_neighbor(learner_node)
+        # Perform all transmutations
+        for id, agent in transmutations:
+            self.set_agent_by_id(id, agent)
 
-        learner_agent = self.graph.nodes[learner_node]['data']
-        neighbor_agent = self.graph.nodes[neighbor_node]['data']
-
-        if neighbor_agent.type != learner_agent.type:
-            self.node_social_learning(learner_agent, neighbor_agent)
 
     def draw_network(self, generation: Optional[int] = None):
         color_map = [agent.type.color for agent in self.agent_list]
@@ -149,10 +171,8 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
     def iterate_generations(self, p_play_game: float, p_social_learning: float, plot=False):
 
         for i_gen in range(self.generations - 1):
-            if random.random() < p_play_game:
-                self.play_game_process()
-            if random.random() < p_social_learning:
-                self.social_learning_process()
+            self.play_game_process(p_play_game)
+            self.social_learning_process(p_social_learning)
 
             self.store_agent_counts()
             self.store_avg_closeness_centrality()
@@ -254,11 +274,13 @@ if __name__ == '__main__':
         0.5,
         200,
         BASE_BARABASI,
-        50
+        50,
+        learn_param_a=1.0,
+        learn_param_b=0.1
     )
     # my_graph.iterate_generations(1, 1, plot=True)
     # my_graph.plot_average_centrality()
     # my_graph.reset()
 
-    repeat_data = my_graph.get_iteration_repeats(1,1, n_repeats=10)
+    repeat_data = my_graph.get_iteration_repeats(0.1,0.1, n_repeats=50)
     my_graph.plot_agent_count_percentiles(repeat_data)
