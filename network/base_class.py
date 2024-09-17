@@ -209,7 +209,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             ax.plot(median, label=agent_type.__name__, c=agent_type.color)
             ax.fill_between(range(self.generations), q1, q3, alpha=0.3, color=agent_type.color)
 
-        ax.set_title('Plot of agent populations over generations')
+        # ax.set_title('Plot of agent populations over generations')
         ax.set_xlabel('Generation')
         ax.set_ylabel('Agent type share of population')
         ax.set_ylim([0, 1])

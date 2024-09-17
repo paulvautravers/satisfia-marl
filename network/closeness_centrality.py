@@ -33,7 +33,7 @@ class NetworkByCentrality(SatisfiaMaximiserNetwork):
                                          sorted(nodes_by_closeness_centrality.items(), key=lambda item: item[1],
                                                 reverse=True)}
 
-        agent_list = np.roll(agent_list, self.shift_most_central)
+        agent_list = np.roll(agent_list, -self.shift_most_central)
 
         for i, node in enumerate(nodes_by_closeness_centrality.keys()):
             graph.nodes[node]['data'] = agent_list[i]
