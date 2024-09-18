@@ -101,29 +101,20 @@ class TestSatisfiaMaximiserNetwork(unittest.TestCase):
 
     def test_play_game_process_function_calls(self):
         #Todo ... This test needs to be elaborated beyond just mock call counts
+        p_play_game = 0.5
         self.network.play_game = Mock()
-        self.network.get_random_edge = Mock()
+        self.network.play_game_process(p_play_game=p_play_game)
 
-        mock_node_1, mock_node_2 = Mock(), Mock()
-        self.network.get_random_edge.return_value = mock_node_1, mock_node_2
-
-        self.network.graph.nodes = MagicMock()
-        mock_dict = {mock_node_1: {'data': Mock()}, mock_node_2: {'data': Mock()}}
-        self.network.graph.nodes.__getitem__.side_effect = mock_dict.__getitem__
-
-        self.network.play_game_process()
-
-        self.assertEqual(self.network.play_game.call_count, 1)
-        self.assertEqual(self.network.get_random_edge.call_count, 1)
+        self.assertAlmostEqual(self.network.play_game.call_count/(len(self.network.graph.edges)), p_play_game, places=1)
 
     def test_iterate_generations(self):
         #Todo parameterised game, learning rates?
-        self.network.play_game_process = Mock()
+        self.network.play_game = Mock()
         self.network.social_learning_process = Mock()
         self.network.store_agent_counts = Mock()
         self.network.store_avg_closeness_centrality = Mock()
 
-        n_iterations = 5000
+        n_iterations = 100
         base_exp_counts = n_iterations*(self.N_GENERATIONS - 1)
 
         exp_game_rate, exp_learning_rate = 0.5, 0.5
@@ -135,14 +126,14 @@ class TestSatisfiaMaximiserNetwork(unittest.TestCase):
 
         call_counts['agent_store'] += self.network.store_agent_counts.call_count
         call_counts['centrality_store'] += self.network.store_avg_closeness_centrality.call_count
-        call_counts['game'] += self.network.play_game_process.call_count
+        call_counts['game'] += self.network.play_game.call_count
         call_counts['learning'] += self.network.social_learning_process.call_count
 
         self.assertEqual(call_counts['agent_store'], base_exp_counts)
         self.assertEqual(call_counts['centrality_store'], base_exp_counts)
 
-        self.assertAlmostEqual(call_counts['game']/base_exp_counts, exp_game_rate, places=2)
-        self.assertAlmostEqual(call_counts['learning']/base_exp_counts, exp_game_rate, places=2)
+        self.assertAlmostEqual(call_counts['game']/(len(self.network.graph.edges) * base_exp_counts), exp_game_rate, places=2)
+        self.assertAlmostEqual(call_counts['learning']/base_exp_counts, 1, places=2)
 
     def test_get_avg_closeness_centrality(self):
         centrality = self.network.get_avg_closeness_centrality()

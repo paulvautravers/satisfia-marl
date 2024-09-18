@@ -1,6 +1,6 @@
 import random
 from collections import defaultdict
-from typing import Callable, Concatenate, TypeVar, ParamSpec
+from typing import TypeVar, ParamSpec
 
 Param = ParamSpec("Param")
 RetType = TypeVar("RetType")
