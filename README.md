@@ -4,6 +4,34 @@ This repository provides object orientated Python code to explore the role of so
 This work has been undertaken as part of the Supervised Program for Alignment Research, and as part of the wider SatisfIA research group. This research group aims to establish agentic AI systems that do not maximise
 for a given goal, avoiding the costly and dangerous results of ill-specified goals. This specific work explores competition between such agents and optimisers. 
 
+
+## Installation
+To install the package, clone the repository and run the following command in the root directory of the repository:
+```bash
+pip install -r requirements.txt
+```
+
+## Usage
+
+### Run a simulation
+To run a simulation, run the following command in the root directory of the repository:
+```bash
+python main.py
+```
+
+### Parameter searcch
+To run a parameter search, run the following command in the root directory of the repository:
+```bash
+python iterate_model_params.py \
+        -gT GRAPH_TYPE \
+        -nA N_AGENTS \
+        -sS SATSISFIA_SHARE \
+        -gP P_PLAY_GAME \
+        -lP P_SOCIAL_LEARNING \
+        -lA LEARN_PARAM_A \
+        -lB LEARN_PARAM_B
+```
+
 ## Sub components: 
 ### Game
 This class defines a basic normal form game object, currently only for 2 player normal form games, where payoffs are stored in the cells of an array. 
