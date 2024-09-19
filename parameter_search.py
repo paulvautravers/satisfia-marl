@@ -11,7 +11,7 @@ from games import JOBST_GAME
 from monte_carlo import combined_strategies
 from agents import SatisfiaAgent
 
-from typing import Optional, List
+from typing import Optional, List, Union
 
 GAME = JOBST_GAME
 
@@ -101,9 +101,9 @@ class ParameterSearch:
             case 'complete_graph':
                 self.graph = complete_graph(self.n_agents)
 
-    def get_random_network(self) -> Optional[SatisfiaMaximiserNetwork, NetworkByNeighborhood, NetworkByCentrality]:
+    def get_random_network(self) -> Optional[Union[SatisfiaMaximiserNetwork, NetworkByNeighborhood, NetworkByCentrality]]:
 
-        return self.network_constructor(self.network_param_dict)
+        return self.network_constructor(**self.network_param_dict)
 
     def create_file(self, dict_to_write: dict):
         with open(self.output_filename, "w+") as f:
@@ -125,7 +125,7 @@ class ParameterSearch:
             self.set_random_params()
             network_simulator = self.get_random_network()
 
-            trajectories = network_simulator.get_iteration_repeats(self.game_probability, self.learn_probability)
+            trajectories = network_simulator.get_iteration_repeats(self.game_probability, self.learn_probability, n_repeats=self.repeats)
             self.satisfia_trajectory = trajectories[SatisfiaAgent]
 
             output_dict = self.full_output_dict
@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
     args = param_search_argparse()
 
-    pS = ParameterSearch(args['generations'], args['repeats'], args['simulations_per_task'],
+    pS = ParameterSearch(int(args['generations']), int(args['repeats']), int(args['simulations_per_task']),
                          game=JOBST_GAME, strategy_dict=combined_strategies)
 
     pS.run_simulations()
