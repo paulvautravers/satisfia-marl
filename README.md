@@ -19,19 +19,6 @@ To run a simulation, run the following command in the root directory of the repo
 python main.py
 ```
 
-### Parameter searcch
-To run a parameter search, run the following command in the root directory of the repository:
-```bash
-python iterate_model_params.py \
-        -gT GRAPH_TYPE \
-        -nA N_AGENTS \
-        -sS SATSISFIA_SHARE \
-        -gP P_PLAY_GAME \
-        -lP P_SOCIAL_LEARNING \
-        -lA LEARN_PARAM_A \
-        -lB LEARN_PARAM_B
-```
-
 ## Sub components: 
 ### Game
 This class defines a basic normal form game object, currently only for 2 player normal form games, where payoffs are stored in the cells of an array. 
