@@ -18,20 +18,7 @@ GAME = JOBST_GAME
 
 class ParameterSearch:
 
-    game, generations, strategy_dict = None, None, None
-
-    n_agents, satisfia_share = None, None
-    game_probability, learn_probability, learn_param_a, learn_param_b = None, None, None, None
-
-    network_constructor = None
-    centrality_shift = None
-
-    graph = None
-    edges_barabasi, neighbours_strogatz, strogatz_probability = None, None, None
-
-    satisfia_trajectory = None
-
-    def __init__(self, generations: int, repeats: int, simulations_per_task: int,
+    def __init__(self, generations: int, repeats: int, simulations_per_task: int, output_dir: Optional[str] = '',
                  game: games.Game = JOBST_GAME, strategy_dict: dict = combined_strategies):
         """"
         Fixed Inputs -> Not explored in search
@@ -42,6 +29,17 @@ class ParameterSearch:
         self.game = game
         self.strategy_dict = strategy_dict
         """
+        Random variables -> Explored in search
+        """
+        self.n_agents, self.satisfia_share = None, None
+        self.game_probability, self.learn_probability = None, None
+        self.learn_param_a, self.learn_param_b = None, None  # Todo Check what range this can have
+
+        self.network_constructor, self.centrality_shift, self.graph = None, None, None
+        self.edges_barabasi, self.neighbours_strogatz, self.strogatz_probability = None, None, None
+
+        self.satisfia_trajectory = None
+        """
         Slurm environmental variables -> Random seeds
         """
         self.slurm_pid = int(os.environ.get('SLURM_PROCID', 0))
@@ -49,6 +47,7 @@ class ParameterSearch:
         self.unique_sim_seed = self.slurm_pid*self.simulations_per_task
 
         self.output_filename = f"slurm_param_search_job_{self.slurm_job_id}_pid_{self.slurm_pid}.csv"
+        self.output_filepath = os.path.join(output_dir, self.output_filename)
         self.create_file(self.full_output_dict)
 
     @property
@@ -70,10 +69,19 @@ class ParameterSearch:
                               'learn_param_a': self.learn_param_a, 'learn_param_b': self.learn_param_b}
 
         if self.network_constructor == NetworkByCentrality:
-            self.centrality_shift = random.randint(0, self.n_agents-1)
             network_param_dict['shift_most_central'] = self.centrality_shift
 
         return network_param_dict
+
+    def zero_simulation_attrs(self):
+        self.n_agents, self.satisfia_share = None, None
+        self.game_probability, self.learn_probability = None, None
+        self.learn_param_a, self.learn_param_b = None, None  # Todo Check what range this can have
+
+        self.network_constructor, self.centrality_shift, self.graph = None, None, None
+        self.edges_barabasi, self.neighbours_strogatz, self.strogatz_probability = None, None, None
+
+        self.satisfia_trajectory = None
 
     def set_random_params(self):
         """
@@ -88,6 +96,10 @@ class ParameterSearch:
         self.learn_param_b = random.random()  # Todo Check what range this can have
 
         self.network_constructor = random.choice([SatisfiaMaximiserNetwork, NetworkByNeighborhood, NetworkByCentrality])
+
+        if self.network_constructor == NetworkByCentrality:
+            self.centrality_shift = random.randint(0, self.n_agents-1)
+
         graph_type = random.choice(['barabasi_albert_graph', 'watts_strogatz_graph', 'complete_graph'])
 
         match graph_type:
@@ -102,11 +114,10 @@ class ParameterSearch:
                 self.graph = complete_graph(self.n_agents)
 
     def get_random_network(self) -> Optional[Union[SatisfiaMaximiserNetwork, NetworkByNeighborhood, NetworkByCentrality]]:
-
         return self.network_constructor(**self.network_param_dict)
 
     def create_file(self, dict_to_write: dict):
-        with open(self.output_filename, "w+") as f:
+        with open(self.output_filepath, "w+") as f:
             writer = csv.DictWriter(f, dict_to_write.keys())
             writer.writeheader()
 
@@ -116,20 +127,22 @@ class ParameterSearch:
             writer.writerow(dict_to_write)
 
     def run_simulations(self):
-
         for i in range(self.simulations_per_task):
 
-            self.unique_sim_seed += i
+            self.unique_sim_seed += 1
             random.seed(self.unique_sim_seed)  # Ensure that params for each simulation run are reproducible
 
             self.set_random_params()
             network_simulator = self.get_random_network()
 
-            trajectories = network_simulator.get_iteration_repeats(self.game_probability, self.learn_probability, n_repeats=self.repeats)
+            trajectories = network_simulator.get_iteration_repeats(self.game_probability, self.learn_probability,
+                                                                   self.repeats)
             self.satisfia_trajectory = trajectories[SatisfiaAgent]
 
             output_dict = self.full_output_dict
             self.write_to_file(output_dict)
+
+            self.zero_simulation_attrs()
 
 
 def param_search_argparse():
