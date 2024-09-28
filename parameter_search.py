@@ -35,7 +35,7 @@ class ParameterSearch:
         self.game_probability, self.learn_probability = None, None
         self.learn_param_a, self.learn_param_b = None, None  # Todo Check what range this can have
 
-        self.network_constructor, self.centrality_shift, self.graph = None, None, None
+        self.network_constructor, self.centrality_shift, self.graph_type, self.graph = None, None, None, None
         self.edges_barabasi, self.neighbours_strogatz, self.strogatz_probability = None, None, None
 
         self.satisfia_trajectory = None
@@ -57,7 +57,7 @@ class ParameterSearch:
                 'game_probability': self.game_probability, 'learn_probability': self.learn_probability,
                 'learn_param_a': self.learn_param_a, 'learn_param_b': self.learn_param_b,
                 'network_constructor': self.network_constructor, 'shift_most_central': self.centrality_shift,
-                'base_graph': self.graph, 'edges_barabasi': self.edges_barabasi,
+                'base_graph': self.graph_type, 'edges_barabasi': self.edges_barabasi,
                 'neighbours_strogatz': self.neighbours_strogatz, 'strogatz_probability': self.strogatz_probability,
                 'satisfia_trajectory': self.satisfia_trajectory}
 
@@ -78,7 +78,7 @@ class ParameterSearch:
         self.game_probability, self.learn_probability = None, None
         self.learn_param_a, self.learn_param_b = None, None  # Todo Check what range this can have
 
-        self.network_constructor, self.centrality_shift, self.graph = None, None, None
+        self.network_constructor, self.centrality_shift, self.graph_type, self.graph = None, None, None, None
         self.edges_barabasi, self.neighbours_strogatz, self.strogatz_probability = None, None, None
 
         self.satisfia_trajectory = None
@@ -87,7 +87,7 @@ class ParameterSearch:
         """
         Randomizes relevant parameters being searched over
         """
-        self.n_agents = random.randint(10, 1000)
+        self.n_agents = random.randint(10, 500)*2
         self.satisfia_share = random.random()
 
         self.game_probability = random.random()
@@ -100,9 +100,9 @@ class ParameterSearch:
         if self.network_constructor == NetworkByCentrality:
             self.centrality_shift = random.randint(0, self.n_agents-1)
 
-        graph_type = random.choice(['barabasi_albert_graph', 'watts_strogatz_graph', 'complete_graph'])
+        self.graph_type = random.choice(['barabasi_albert_graph', 'watts_strogatz_graph', 'complete_graph'])
 
-        match graph_type:
+        match self.graph_type:
             case 'barabasi_albert_graph':
                 self.edges_barabasi = random.randint(1, 5)
                 self.graph = barabasi_albert_graph(self.n_agents, self.edges_barabasi)
@@ -122,18 +122,21 @@ class ParameterSearch:
             writer.writeheader()
 
     def write_to_file(self, dict_to_write: dict):
-        with open(self.output_filename, "w+") as f:
+        with open(self.output_filename, "a") as f:
             writer = csv.DictWriter(f, dict_to_write.keys())
             writer.writerow(dict_to_write)
 
     def run_simulations(self):
         for i in range(self.simulations_per_task):
 
+            print(i)
             self.unique_sim_seed += 1
             random.seed(self.unique_sim_seed)  # Ensure that params for each simulation run are reproducible
 
             self.set_random_params()
             network_simulator = self.get_random_network()
+            print(self.full_output_dict)
+            print("\n")
 
             trajectories = network_simulator.get_iteration_repeats(self.game_probability, self.learn_probability,
                                                                    self.repeats)
@@ -143,15 +146,18 @@ class ParameterSearch:
             self.write_to_file(output_dict)
 
             self.zero_simulation_attrs()
+            print(self.full_output_dict)
+            print("\n")
+
 
 
 def param_search_argparse():
 
     parser = ap.ArgumentParser()
     # Fundamental arguments for parameter search
-    parser.add_argument("-g", "--generations", default=1000, help="Number of generations to track populations")
-    parser.add_argument("-r", "--repeats", default=50, help="Number of repeats for each trajectory")
-    parser.add_argument("-s", "--simulations_per_task", default=100,
+    parser.add_argument("-g", "--generations", default=10, help="Number of generations to track populations")
+    parser.add_argument("-r", "--repeats", default=1, help="Number of repeats for each trajectory")
+    parser.add_argument("-s", "--simulations_per_task", default=10,
                         help="Number of simulations to be ran consecutively, under one task")
     return vars(parser.parse_args())
 
