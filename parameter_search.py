@@ -1,6 +1,7 @@
 import os
 import csv
 import argparse as ap
+import numpy as np
 
 import random
 from networkx import barabasi_albert_graph, watts_strogatz_graph, complete_graph
@@ -104,10 +105,10 @@ class ParameterSearch:
 
         match self.graph_type:
             case 'barabasi_albert_graph':
-                self.edges_barabasi = random.randint(1, 5)
+                self.edges_barabasi = random.randint(1, 6)
                 self.graph = barabasi_albert_graph(self.n_agents, self.edges_barabasi)
             case 'watts_strogatz_graph':
-                self.neighbours_strogatz = random.randint(1, 5)
+                self.neighbours_strogatz = random.randint(1, 3)*2  # K neighbours must be even for strogatz!
                 self.strogatz_probability = random.random()
                 self.graph = watts_strogatz_graph(self.n_agents, self.neighbours_strogatz, self.strogatz_probability)
             case 'complete_graph':
@@ -117,36 +118,33 @@ class ParameterSearch:
         return self.network_constructor(**self.network_param_dict)
 
     def create_file(self, dict_to_write: dict):
-        with open(self.output_filepath, "w+") as f:
+        with open(self.output_filepath, "w+", newline='') as f:
             writer = csv.DictWriter(f, dict_to_write.keys())
             writer.writeheader()
 
     def write_to_file(self, dict_to_write: dict):
-        with open(self.output_filename, "a") as f:
+        with open(self.output_filename, "a", newline='') as f:
             writer = csv.DictWriter(f, dict_to_write.keys())
             writer.writerow(dict_to_write)
 
     def run_simulations(self):
         for i in range(self.simulations_per_task):
 
-            print(i)
             self.unique_sim_seed += 1
             random.seed(self.unique_sim_seed)  # Ensure that params for each simulation run are reproducible
 
             self.set_random_params()
             network_simulator = self.get_random_network()
             print(self.full_output_dict)
-            print("\n")
 
             trajectories = network_simulator.get_iteration_repeats(self.game_probability, self.learn_probability,
                                                                    self.repeats)
-            self.satisfia_trajectory = trajectories[SatisfiaAgent]
+            self.satisfia_trajectory = np.mean(trajectories[SatisfiaAgent], axis=0)
 
             output_dict = self.full_output_dict
             self.write_to_file(output_dict)
 
             self.zero_simulation_attrs()
-            print(self.full_output_dict)
             print("\n")
 
 
