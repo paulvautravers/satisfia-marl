@@ -174,11 +174,17 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             self.play_game_process(p_play_game)
             self.social_learning_process(p_social_learning)
 
-            self.store_agent_counts()
+            current_agent_counts = self.get_current_agent_counts()
+            current_satisfia_share = current_agent_counts[SatisfiaAgent]/self.n_agents
+            self.store_agent_counts(current_agent_counts)
             self.store_avg_closeness_centrality()
+
             if plot and i_gen % self.draw_network_interval == 0:
                 self.draw_network(i_gen)
-                pass
+
+            current_satisfia_share = current_agent_counts[SatisfiaAgent]/self.n_agents
+            if current_satisfia_share in [0, 1]:
+                break
 
         if plot:
             self.draw_network(i_gen)
@@ -261,7 +267,7 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
 
 if __name__ == '__main__':
 
-    N_AGENTS = 20
+    N_AGENTS = 30
     EDGES_PER_NODE = 2
     BASE_BARABASI = nx.barabasi_albert_graph(N_AGENTS, EDGES_PER_NODE)
 
@@ -272,15 +278,12 @@ if __name__ == '__main__':
         JOBST_GAME,
         combined_strategies,
         0.5,
-        200,
+        10,
         BASE_BARABASI,
         50,
         learn_param_a=1.0,
         learn_param_b=0.1
     )
-    # my_graph.iterate_generations(1, 1, plot=True)
-    # my_graph.plot_average_centrality()
-    # my_graph.reset()
 
-    repeat_data = my_graph.get_iteration_repeats(0.1,0.1, n_repeats=50)
-    my_graph.plot_agent_count_percentiles(repeat_data)
+    trajectory = my_graph.iterate_generations(1, 1)
+    print(trajectory)

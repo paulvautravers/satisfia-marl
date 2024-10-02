@@ -55,4 +55,5 @@ if __name__ == '__main__':
         200,
         9
     )
-    my_graph.iterate_generations(1, 0.5, plot=True)
+    trajectory = my_graph.iterate_generations(1, 0.5, plot=True)
+    print(trajectory)
