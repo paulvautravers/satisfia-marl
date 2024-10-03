@@ -15,4 +15,4 @@ module load python/3.8                    # Load the Python module (adjust as ne
 # source /path/to/virtualenv/bin/activate
 
 # Run the Python script with arguments
-srun python parameter_search.py --generations 100 --repeats 1 --simulations_per_task 100
+srun python parameter_search.py --generations 200 --repeats 1 --simulations_per_task 400
