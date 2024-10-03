@@ -75,4 +75,5 @@ if __name__ == '__main__':
         50
     )
     my_graph.draw_network(0)
-    my_graph.iterate_generations(1, 1, plot=True)
+    trajectory = my_graph.iterate_generations(1, 1, plot=True)
+    print(trajectory)

@@ -1,2 +1,3 @@
 from .base_class import SatisfiaMaximiserNetwork
 from .closeness_centrality import NetworkByCentrality
+from .neighbourhood import NetworkByNeighborhood

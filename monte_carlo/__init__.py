@@ -1,6 +1,6 @@
 import random
 from collections import defaultdict
-from typing import TypeVar, ParamSpec
+from typing import TypeVar, ParamSpec, List, Optional
 
 Param = ParamSpec("Param")
 RetType = TypeVar("RetType")
@@ -38,17 +38,16 @@ class MonteCarlo:
         initial_agent_counts = self.get_current_agent_counts()
         self.agent_counts = {agent_type: [initial_agent_counts[agent_type]] for agent_type in self.agent_types}
 
-    def get_current_agent_counts(self):
+    def get_current_agent_counts(self) -> dict[any, int]:
         current_agent_counts = {agent_type: 0 for agent_type in self.agent_types}
         for agent in self.agent_list:
             current_agent_counts[agent.type] += 1
         return current_agent_counts
 
-    def store_agent_counts(self):
-        current_agent_counts = self.get_current_agent_counts()
+    def store_agent_counts(self, agent_counts: Optional[dict[any, int]] = None):
+        agent_counts = self.get_current_agent_counts() if agent_counts is None else agent_counts
         for agent_type, count_list in self.agent_counts.items():
-            self.agent_counts[agent_type].append(current_agent_counts[agent_type])
-
+            self.agent_counts[agent_type].append(agent_counts[agent_type])
 
     def set_agent_by_id(self, id: int, new_agent: Agent):
         assert id == new_agent.id, "New agent must have the given ID as an attribute"
