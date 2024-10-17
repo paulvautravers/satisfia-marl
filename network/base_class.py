@@ -175,13 +175,15 @@ class SatisfiaMaximiserNetwork(MonteCarlo):
             self.social_learning_process(p_social_learning)
 
             current_agent_counts = self.get_current_agent_counts()
+
             self.store_agent_counts(current_agent_counts)
             self.store_avg_closeness_centrality()
 
             if plot and i_gen % self.draw_network_interval == 0:
                 self.draw_network(i_gen)
 
-            current_satisfia_share = current_agent_counts[SatisfiaAgent]/self.n_agents
+            current_satisfia_share = current_agent_counts[SatisfiaAgent] / self.n_agents
+
             if current_satisfia_share in [0, 1] and i_gen != self.generations - 1:
                 # Calculate additional gens, -2 for index & fact agent lists at gen 0 already have one element
                 additional_generations = self.generations - i_gen - 2

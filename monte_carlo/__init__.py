@@ -1,6 +1,6 @@
 import random
 from collections import defaultdict
-from typing import TypeVar, ParamSpec, List, Optional
+from typing import TypeVar, ParamSpec, List, Optional, Any
 
 Param = ParamSpec("Param")
 RetType = TypeVar("RetType")
@@ -19,20 +19,21 @@ class MonteCarlo:
 
     def __init__(self, game: Game, strategy_set: dict,
                  agent_list: npt.NDArray[agents.Agent],
-                 generations: int = 100):
+                 generations: int = 100,
+                 agent_types: list[Any] = [SatisfiaAgent, MaximiserAgent]):
 
         #These attributes remain unchanged
         self.game = game
         self.strategy_set = strategy_set
         self.generations = generations
+        self.agent_types = agent_types
 
-        self.agent_list, self.agent_types, self.reward_dict, self.agent_counts = None, None, None, None
+        self.agent_list, self.reward_dict, self.agent_counts = None, None, None
         self.setup_agent_list_attributes(agent_list)
 
     def setup_agent_list_attributes(self, agent_list):
 
         self.agent_list = agent_list
-        self.agent_types = set([agent.type for agent in agent_list])
         self.reward_dict = defaultdict(int)
 
         initial_agent_counts = self.get_current_agent_counts()
@@ -46,7 +47,7 @@ class MonteCarlo:
 
     def store_agent_counts(self, agent_counts: Optional[dict[any, int]] = None):
         agent_counts = self.get_current_agent_counts() if agent_counts is None else agent_counts
-        for agent_type, count_list in self.agent_counts.items():
+        for agent_type, count_list in agent_counts.items():
             self.agent_counts[agent_type].append(agent_counts[agent_type])
 
     def set_agent_by_id(self, id: int, new_agent: Agent):
@@ -75,7 +76,6 @@ class MonteCarlo:
         self.reward_dict[type(agent1)] = max(0, self.reward_dict[type(agent1)] + r1)
         self.reward_dict[type(agent2)] = max(0, self.reward_dict[type(agent2)] + r2)
 
-
         agent1.payoff = agent1.get_new_avg_payoff(max(0, r1))
         agent2.payoff = agent2.get_new_avg_payoff(max(0, r2))
 
@@ -103,7 +103,6 @@ class MonteCarlo:
                     self.agent_list = np.append(self.agent_list,
                                                 np.array([agent_type(self.strategy_set[agent_type])
                                                           for _ in range(n_agents)]))
-
 
     def iterate_generations(self, plot=False):
 
