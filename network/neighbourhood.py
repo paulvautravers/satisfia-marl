@@ -32,6 +32,12 @@ class NetworkByNeighborhood(SatisfiaMaximiserNetwork):
         queue.append(starting_node_idx)
 
         while n_satisfia_to_assign > 0:
+
+            if len(queue) == 0:
+                unassigned = list(filter(lambda i: i not in assigned, range(len(graph))))
+                new_node = np.random.choice(unassigned)
+                queue.append(new_node)
+
             # Get a new node
             current_node_idx = queue.popleft()
 
